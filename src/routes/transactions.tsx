@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -177,5 +176,3 @@ function formatCell(v: unknown): string {
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
 }
-
-void supabase;
