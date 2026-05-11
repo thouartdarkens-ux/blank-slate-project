@@ -21,8 +21,15 @@ interface ApiResponse {
   totalPages: number;
 }
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+if (!SUPABASE_URL || !ANON_KEY) {
+  throw new Error(
+    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY environment variables. " +
+    "Make sure they are set in your .env file locally and in your deployment platform's environment settings.",
+  );
+}
 
 function App() {
   const [page, setPage] = useState(1);
@@ -170,3 +177,6 @@ function formatCell(v: unknown): string {
 }
 
 export default App;
+
+
+export default App
