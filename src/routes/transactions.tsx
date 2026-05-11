@@ -176,5 +176,3 @@ function formatCell(v: unknown): string {
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
 }
-
-void supabase;
