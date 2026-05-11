@@ -177,6 +177,3 @@ function formatCell(v: unknown): string {
 }
 
 export default App;
-
-
-export default App
