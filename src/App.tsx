@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,13 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-export const Route = createFileRoute("/")({
-  component: TransactionsPage,
-  head: () => ({
-    meta: [{ title: "Transactions" }],
-  }),
-});
 
 type Transaction = Record<string, any>;
 
@@ -32,7 +24,7 @@ interface ApiResponse {
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
-function TransactionsPage() {
+function App() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [pageSizeInput, setPageSizeInput] = useState("10");
@@ -140,7 +132,7 @@ function TransactionsPage() {
                   {loading && (
                     <TableRow>
                       <TableCell colSpan={columns.length || 1}>
-                        Loading…
+                        Loading...
                       </TableCell>
                     </TableRow>
                   )}
@@ -176,3 +168,5 @@ function formatCell(v: unknown): string {
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
 }
+
+export default App;
