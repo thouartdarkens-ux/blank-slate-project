@@ -232,7 +232,7 @@ function App() {
                       <TableRow key={(row.id as string) ?? i}>
                         {columns.map((c) => (
                           <TableCell key={c} className="whitespace-nowrap">
-                            {formatCell(row[c])}
+                            {formatCell(row[c], c)}
                           </TableCell>
                         ))}
                       </TableRow>
@@ -254,8 +254,22 @@ function App() {
   );
 }
 
-function formatCell(v: unknown): string {
-  if (v === null || v === undefined) return "";
+const DATE_COLUMNS = new Set(["date", "created_at", "updated_at", "sold_at"]);
+
+function formatCell(v: unknown, column?: string): string {
+  if (v === null || v === undefined || v === "") return "";
+  if (column && DATE_COLUMNS.has(column) && typeof v === "string") {
+    const d = new Date(v);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+  }
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
 }
