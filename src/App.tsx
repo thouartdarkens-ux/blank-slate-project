@@ -2,6 +2,13 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -26,15 +33,22 @@ const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 if (!SUPABASE_URL || !ANON_KEY) {
   throw new Error(
-    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY environment variables. " +
-    "Make sure they are set in your .env file locally and in your deployment platform's environment settings.",
+    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY environment variables.",
   );
 }
+
+const STATUS_ANY = "__any__";
 
 function App() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [pageSizeInput, setPageSizeInput] = useState("10");
+
+  // Inputs (what the user types) vs. applied filters (what the request uses)
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>(STATUS_ANY);
+
   const [resp, setResp] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +59,14 @@ function App() {
       setLoading(true);
       setError(null);
       try {
-        const url = `${SUPABASE_URL}/functions/v1/get-transactions?page=${page}&pageSize=${pageSize}`;
+        const params = new URLSearchParams({
+          page: String(page),
+          pageSize: String(pageSize),
+        });
+        if (search) params.set("search", search);
+        if (statusFilter !== STATUS_ANY) params.set("status", statusFilter);
+
+        const url = `${SUPABASE_URL}/functions/v1/get-transactions?${params.toString()}`;
         const r = await fetch(url, {
           headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
         });
@@ -62,7 +83,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize]);
+  }, [page, pageSize, search, statusFilter]);
 
   const columns = resp?.data[0] ? Object.keys(resp.data[0]) : [];
   const totalPages = resp?.totalPages ?? 0;
@@ -70,6 +91,18 @@ function App() {
   const applyPageSize = () => {
     const n = Math.max(1, Math.min(100, parseInt(pageSizeInput, 10) || 10));
     setPageSize(n);
+    setPage(1);
+  };
+
+  const applySearch = () => {
+    setSearch(searchInput.trim());
+    setPage(1);
+  };
+
+  const clearFilters = () => {
+    setSearchInput("");
+    setSearch("");
+    setStatusFilter(STATUS_ANY);
     setPage(1);
   };
 
@@ -81,6 +114,57 @@ function App() {
             <CardTitle>Transactions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Search + filter bar */}
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex-1 min-w-[240px]">
+                <label className="block text-sm text-muted-foreground mb-1">
+                  Search
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Name, email, reference, phone, product"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") applySearch();
+                    }}
+                  />
+                  <Button onClick={applySearch}>Search</Button>
+                </div>
+              </div>
+
+              <div className="w-44">
+                <label className="block text-sm text-muted-foreground mb-1">
+                  Status
+                </label>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(v) => {
+                    setStatusFilter(v);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Any" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={STATUS_ANY}>Any</SelectItem>
+                    <SelectItem value="pending">pending</SelectItem>
+                    <SelectItem value="success">success</SelectItem>
+                    <SelectItem value="failed">failed</SelectItem>
+                    <SelectItem value="awaiting_inventory">
+                      awaiting_inventory
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button variant="ghost" onClick={clearFilters}>
+                Clear
+              </Button>
+            </div>
+
+            {/* Page size + pagination */}
             <div className="flex flex-wrap items-end gap-3">
               <div>
                 <label className="block text-sm text-muted-foreground mb-1">
