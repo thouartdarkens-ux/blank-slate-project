@@ -1,5 +1,9 @@
-// Public GET endpoint: returns latest transactions with pagination
-// Query params: page (default 1), pageSize (default 10, max 100)
+// Public GET endpoint: returns latest transactions with pagination + search/filter
+// Query params:
+//   page (default 1)
+//   pageSize (default 10, max 100)
+//   search (optional - matches name, email, reference, phone_number, product)
+//   status (optional - exact match)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -20,6 +24,9 @@ Deno.serve(async (req) => {
       100,
       Math.max(1, parseInt(url.searchParams.get("pageSize") ?? "10", 10) || 10),
     );
+    const search = (url.searchParams.get("search") ?? "").trim();
+    const status = (url.searchParams.get("status") ?? "").trim();
+
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
@@ -28,11 +35,31 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { data, error, count } = await supabase
+    let query = supabase
       .from("transactions")
       .select("*", { count: "exact" })
-      .order("date", { ascending: false })
-      .range(from, to);
+      .order("date", { ascending: false });
+
+    if (status) {
+      query = query.eq("status", status);
+    }
+
+    if (search) {
+      // Escape commas/parentheses that would break the .or() filter syntax
+      const safe = search.replace(/[,()]/g, " ");
+      const pattern = `%${safe}%`;
+      query = query.or(
+        [
+          `name.ilike.${pattern}`,
+          `email.ilike.${pattern}`,
+          `reference.ilike.${pattern}`,
+          `phone_number.ilike.${pattern}`,
+          `product.ilike.${pattern}`,
+        ].join(","),
+      );
+    }
+
+    const { data, error, count } = await query.range(from, to);
 
     if (error) throw error;
 
