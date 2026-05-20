@@ -22,6 +22,7 @@ const Index = () => {
         <Banner />
         <Hero />
         <VoucherTypes />
+        <TertiaryForms />
         <VoucherHistory />
         <Benefits />
         <PurchaseNotifications />
