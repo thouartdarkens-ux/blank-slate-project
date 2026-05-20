@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { decryptCheckoutData } from '@/utils/encryption';
-import { supabase } from '@/integrations/supabase/client';
 
 interface CheckoutState {
   type: string;
@@ -18,62 +17,54 @@ interface CheckoutState {
 
 interface PaymentFormData {
   email: string;
-  name: string;
   mobileNumber: string;
 }
 
-/**
- * Checkout component for processing customer payments
- * 
- * This component:
- * 1. Collects customer information (name, email, and mobile number)
- * 2. Generates a reference ID
- * 3. Redirects to external payment gateway
- */
+declare global {
+  interface Window {
+    PaystackPop?: any;
+  }
+}
+
+const PAYSTACK_PUBLIC_KEY = 'pk_test_d1de6089b6f223b03f7ef0e854ba92784b1b0cc3';
+
 const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [checkoutDetails, setCheckoutDetails] = useState<CheckoutState | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<PaymentFormData>();
 
-  // Extract and decrypt checkout data from URL
   useEffect(() => {
     try {
-      // Get encrypted data from URL
       const searchParams = new URLSearchParams(location.search);
       const encryptedData = searchParams.get('data');
-      
+
       if (!encryptedData) {
         toast.error('No checkout data found');
         navigate('/');
         return;
       }
-      
-      // Decrypt the data
+
       const parsedData = decryptCheckoutData(encryptedData) as CheckoutState;
-      
-      // Validate the data
+
       if (!parsedData || !parsedData.type || !parsedData.quantity || !parsedData.amount) {
         toast.error('Invalid checkout data');
         navigate('/');
         return;
       }
-      
-      // Check if the checkout data has expired (30 minutes)
+
       const now = new Date().getTime();
-      const expirationTime = 30 * 60 * 1000; // 30 minutes in milliseconds
-      
+      const expirationTime = 30 * 60 * 1000;
+
       if (parsedData.timestamp && (now - parsedData.timestamp) > expirationTime) {
         toast.error('Checkout session expired. Please start again.');
         navigate('/');
         return;
       }
-      
-      // Set the checkout details
+
       setCheckoutDetails(parsedData);
-      
-      // Clear URL parameters after processing to further enhance security
       window.history.replaceState({}, document.title, window.location.pathname);
     } catch (error) {
       console.error('Failed to retrieve checkout data:', error);
@@ -82,69 +73,58 @@ const Checkout = () => {
     }
   }, [location.search, navigate]);
 
-  // Map voucher types to their respective product IDs
-  const getProductId = (voucherType: string) => {
-    switch(voucherType) {
-      case 'BECE':
-        return 'OuwclNa2V';
-      case 'WASSCE':
-        return 'DN0X1U1JL';
-      default:
-        return 'GrqHE2LKw'; // Default product ID
+  const onSubmit = (data: PaymentFormData) => {
+    if (!checkoutDetails) return;
+    if (!window.PaystackPop) {
+      toast.error('Payment library not loaded. Please refresh and try again.');
+      return;
     }
-  };
 
-  const generateReference = () => {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-  };
+    setIsProcessing(true);
 
-  const [isProcessing, setIsProcessing] = useState(false);
+    const handler = window.PaystackPop.setup({
+      key: PAYSTACK_PUBLIC_KEY,
+      email: data.email,
+      amount: Math.round(checkoutDetails.amount * 100),
+      currency: 'GHS',
+      metadata: {
+        product_type: checkoutDetails.type,
+        quantity: checkoutDetails.quantity,
+        amount: checkoutDetails.amount,
+        mobile_number: data.mobileNumber,
+        timestamp: checkoutDetails.timestamp,
+        custom_fields: [
+          {
+            display_name: 'Product',
+            variable_name: 'product_type',
+            value: checkoutDetails.type,
+          },
+          {
+            display_name: 'Quantity',
+            variable_name: 'quantity',
+            value: String(checkoutDetails.quantity),
+          },
+          {
+            display_name: 'Mobile Number',
+            variable_name: 'mobile_number',
+            value: data.mobileNumber,
+          },
+        ],
+      },
+      onClose: () => {
+        setIsProcessing(false);
+        toast.info('Payment window closed');
+      },
+      callback: (response: any) => {
+        setIsProcessing(false);
+        if (response?.reference) {
+          localStorage.setItem('paymentReference', response.reference);
+        }
+        window.location.href = `${window.location.origin}/payment-success`;
+      },
+    });
 
-  const onSubmit = async (data: PaymentFormData) => {
-    try {
-      setIsProcessing(true);
-
-      const productId = getProductId(checkoutDetails!.type);
-
-      const { data: responseData, error } = await supabase.functions.invoke('generate-payment-link', {
-        body: {
-          amount: checkoutDetails!.amount,
-          product_id: productId,
-          customer_name: data.name,
-          customer_email: data.email,
-          customer_phone: data.mobileNumber,
-          quantity: checkoutDetails!.quantity,
-          voucher_type: checkoutDetails!.type,
-          redirect_url: `${window.location.origin}/payment-success`,
-        },
-      });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        toast.error('Failed to initiate payment. Please try again.');
-        return;
-      }
-
-      const paymentLink = responseData?.data?.payment_link;
-      if (!paymentLink) {
-        console.error('No payment link in response:', responseData);
-        toast.error('Failed to get payment link. Please try again.');
-        return;
-      }
-
-      // Store transaction reference for success page
-      if (responseData?.data?.client_transaction_id) {
-        localStorage.setItem('paymentReference', responseData.data.client_transaction_id);
-      }
-
-      console.log('Redirecting to payment link:', paymentLink);
-      window.location.href = paymentLink;
-    } catch (error) {
-      console.error('Payment initiation error:', error);
-      toast.error('Failed to initiate payment. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
+    handler.openIframe();
   };
 
   if (!checkoutDetails) {
@@ -188,19 +168,6 @@ const Checkout = () => {
             </div>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  {...register('name', { required: 'Name is required' })}
-                  placeholder="Enter your full name"
-                />
-                {errors.name && (
-                  <p className="text-sm text-red-500">{errors.name.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -226,9 +193,9 @@ const Checkout = () => {
               </div>
 
               <Button type="submit" className="w-full" size="lg" disabled={isProcessing}>
-                {isProcessing ? 'Processing...' : 'Proceed to Payment'}
+                {isProcessing ? 'Processing...' : 'Pay with Paystack'}
               </Button>
-              
+
               <Button
                 variant="outline"
                 className="w-full"
