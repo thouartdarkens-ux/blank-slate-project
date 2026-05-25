@@ -13,11 +13,13 @@ interface CheckoutState {
   quantity: number;
   amount: number;
   timestamp: number;
+  isTertiary?: boolean;
 }
 
 interface PaymentFormData {
   email: string;
   mobileNumber: string;
+  fullName?: string;
 }
 
 declare global {
