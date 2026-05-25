@@ -23,13 +23,14 @@ serve(async (req) => {
     const amountCedis = metadata?.amount ?? (typeof amountPesewas === 'number' ? amountPesewas / 100 : undefined);
     const phone_number = metadata?.mobile_number;
     const email = data?.customer?.email;
+    const full_name = metadata?.full_name;
     const quantity = typeof metadata?.quantity === 'number'
       ? metadata.quantity
       : parseInt(String(metadata?.quantity ?? '1'), 10);
     const product_type_raw = metadata?.product_type ?? '';
     const product_type = String(product_type_raw).toUpperCase();
 
-    console.log('🔄 Parsed:', { reference, amountCedis, phone_number, email, quantity, product_type });
+    console.log('🔄 Parsed:', { reference, amountCedis, phone_number, email, full_name, quantity, product_type });
 
     if (body?.event !== 'charge.success' || data?.status !== 'success') {
       console.log('ℹ️ Ignoring non-success event');
@@ -86,7 +87,8 @@ serve(async (req) => {
     const arkeselApiKey = 'd21HelpLTHdvaWlwVGNLV2NTRFE';
     const senderId = 'Movaalerts';
     const recipients = ['0557956020'];
-    const message = `New ${product_type_raw} order. Ref: ${reference}. Phone: ${phone_number}. Amount in cedis not peswas : GHS ${amountCedis}. Qty: ${quantity}.`;
+    const fullNamePart = full_name ? ` Name: ${full_name}.` : '';
+    const message = `New ${product_type_raw} order. Ref: ${reference}. Phone: ${phone_number}.${fullNamePart} Amount in cedis not peswas : GHS ${amountCedis}. Qty: ${quantity}.`;
 
     console.log('📨 Sending Arkesel SMS:', message);
 
