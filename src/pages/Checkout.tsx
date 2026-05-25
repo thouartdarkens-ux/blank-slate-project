@@ -179,6 +179,25 @@ const Checkout = () => {
               </div>
             </div>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {checkoutDetails.isTertiary && (
+                <>
+                  <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-900">
+                    Contact 0557956020 if you need assistance with filling the forms
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      {...register('fullName', { required: 'Full name is required' })}
+                      placeholder="Enter your full name"
+                    />
+                    {errors.fullName && (
+                      <p className="text-sm text-red-500">{errors.fullName.message}</p>
+                    )}
+                  </div>
+                </>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
