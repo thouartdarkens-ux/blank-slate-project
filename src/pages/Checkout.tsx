@@ -28,7 +28,7 @@ declare global {
   }
 }
 
-const PAYSTACK_PUBLIC_KEY = 'pk_test_d1de6089b6f223b03f7ef0e854ba92784b1b0cc3';
+const PAYSTACK_PUBLIC_KEY = 'pk_live_fe932e135485cd49334f351f9d7e910448bd88d2';
 
 const Checkout = () => {
   const navigate = useNavigate();
