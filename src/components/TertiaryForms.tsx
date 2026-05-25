@@ -31,6 +31,7 @@ const TertiaryForms = () => {
       quantity,
       amount: parseFloat(totalAmount.toFixed(2)),
       timestamp: new Date().getTime(),
+      isTertiary: true,
     };
     const encrypted = encryptCheckoutData(checkoutData);
     navigate(`/checkout?data=${encrypted}`);

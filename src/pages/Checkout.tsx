@@ -13,11 +13,13 @@ interface CheckoutState {
   quantity: number;
   amount: number;
   timestamp: number;
+  isTertiary?: boolean;
 }
 
 interface PaymentFormData {
   email: string;
   mobileNumber: string;
+  fullName?: string;
 }
 
 declare global {
@@ -92,6 +94,7 @@ const Checkout = () => {
         quantity: checkoutDetails.quantity,
         amount: checkoutDetails.amount,
         mobile_number: data.mobileNumber,
+        full_name: data.fullName,
         timestamp: checkoutDetails.timestamp,
         custom_fields: [
           {
@@ -109,6 +112,13 @@ const Checkout = () => {
             variable_name: 'mobile_number',
             value: data.mobileNumber,
           },
+          ...(data.fullName
+            ? [{
+                display_name: 'Full Name',
+                variable_name: 'full_name',
+                value: data.fullName,
+              }]
+            : []),
         ],
       },
       onClose: () => {
@@ -120,7 +130,9 @@ const Checkout = () => {
         if (response?.reference) {
           localStorage.setItem('paymentReference', response.reference);
         }
-        window.location.href = `${window.location.origin}/payment-success`;
+        window.location.href = checkoutDetails.isTertiary
+          ? `${window.location.origin}/`
+          : `${window.location.origin}/payment-success`;
       },
     });
 
@@ -167,6 +179,25 @@ const Checkout = () => {
               </div>
             </div>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {checkoutDetails.isTertiary && (
+                <>
+                  <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-900">
+                    Contact 0557956020 if you need assistance with filling the forms
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      {...register('fullName', { required: 'Full name is required' })}
+                      placeholder="Enter your full name"
+                    />
+                    {errors.fullName && (
+                      <p className="text-sm text-red-500">{errors.fullName.message}</p>
+                    )}
+                  </div>
+                </>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
