@@ -94,6 +94,7 @@ const Checkout = () => {
         quantity: checkoutDetails.quantity,
         amount: checkoutDetails.amount,
         mobile_number: data.mobileNumber,
+        full_name: data.fullName,
         timestamp: checkoutDetails.timestamp,
         custom_fields: [
           {
@@ -111,6 +112,13 @@ const Checkout = () => {
             variable_name: 'mobile_number',
             value: data.mobileNumber,
           },
+          ...(data.fullName
+            ? [{
+                display_name: 'Full Name',
+                variable_name: 'full_name',
+                value: data.fullName,
+              }]
+            : []),
         ],
       },
       onClose: () => {
