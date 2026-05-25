@@ -130,7 +130,9 @@ const Checkout = () => {
         if (response?.reference) {
           localStorage.setItem('paymentReference', response.reference);
         }
-        window.location.href = `${window.location.origin}/payment-success`;
+        window.location.href = checkoutDetails.isTertiary
+          ? `${window.location.origin}/`
+          : `${window.location.origin}/payment-success`;
       },
     });
 
