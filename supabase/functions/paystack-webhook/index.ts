@@ -23,13 +23,14 @@ serve(async (req) => {
     const amountCedis = metadata?.amount ?? (typeof amountPesewas === 'number' ? amountPesewas / 100 : undefined);
     const phone_number = metadata?.mobile_number;
     const email = data?.customer?.email;
+    const full_name = metadata?.full_name;
     const quantity = typeof metadata?.quantity === 'number'
       ? metadata.quantity
       : parseInt(String(metadata?.quantity ?? '1'), 10);
     const product_type_raw = metadata?.product_type ?? '';
     const product_type = String(product_type_raw).toUpperCase();
 
-    console.log('🔄 Parsed:', { reference, amountCedis, phone_number, email, quantity, product_type });
+    console.log('🔄 Parsed:', { reference, amountCedis, phone_number, email, full_name, quantity, product_type });
 
     if (body?.event !== 'charge.success' || data?.status !== 'success') {
       console.log('ℹ️ Ignoring non-success event');
