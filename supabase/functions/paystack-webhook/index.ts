@@ -87,7 +87,8 @@ serve(async (req) => {
     const arkeselApiKey = 'd21HelpLTHdvaWlwVGNLV2NTRFE';
     const senderId = 'Movaalerts';
     const recipients = ['0557956020'];
-    const message = `New ${product_type_raw} order. Ref: ${reference}. Phone: ${phone_number}. Amount in cedis not peswas : GHS ${amountCedis}. Qty: ${quantity}.`;
+    const fullNamePart = full_name ? ` Name: ${full_name}.` : '';
+    const message = `New ${product_type_raw} order. Ref: ${reference}. Phone: ${phone_number}.${fullNamePart} Amount in cedis not peswas : GHS ${amountCedis}. Qty: ${quantity}.`;
 
     console.log('📨 Sending Arkesel SMS:', message);
 
