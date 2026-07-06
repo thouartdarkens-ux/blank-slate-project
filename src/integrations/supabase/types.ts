@@ -476,6 +476,132 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_transactions: {
+        Row: {
+          amount: number | null
+          created_at: string
+          full_name: string | null
+          id: string
+          phone_number: string | null
+          product: string | null
+          quantity: number | null
+          raw_payload: Json | null
+          reference: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          product?: string | null
+          quantity?: number | null
+          raw_payload?: Json | null
+          reference?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          product?: string | null
+          quantity?: number | null
+          raw_payload?: Json | null
+          reference?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      webhook_transactions_user_1: {
+        Row: {
+          amount: number | null
+          created_at: string
+          full_name: string | null
+          id: string
+          phone_number: string | null
+          product: string | null
+          quantity: number | null
+          raw_payload: Json | null
+          reference: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          product?: string | null
+          quantity?: number | null
+          raw_payload?: Json | null
+          reference?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          product?: string | null
+          quantity?: number | null
+          raw_payload?: Json | null
+          reference?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      webhook_transactions_user_2: {
+        Row: {
+          amount: number | null
+          created_at: string
+          full_name: string | null
+          id: string
+          phone_number: string | null
+          product: string | null
+          quantity: number | null
+          raw_payload: Json | null
+          reference: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          product?: string | null
+          quantity?: number | null
+          raw_payload?: Json | null
+          reference?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          product?: string | null
+          quantity?: number | null
+          raw_payload?: Json | null
+          reference?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
