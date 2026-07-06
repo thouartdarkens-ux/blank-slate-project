@@ -14,6 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_withdrawals: {
+        Row: {
+          affiliate_id: string
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          processed_at: string | null
+          requested_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          amount: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_withdrawals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliates: {
+        Row: {
+          balance: number
+          commission_rate: number
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          password_hash: string
+          phone: string | null
+          transactions_table: string
+          updated_at: string
+          username: string
+          ussd_code: string | null
+        }
+        Insert: {
+          balance?: number
+          commission_rate?: number
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          password_hash: string
+          phone?: string | null
+          transactions_table: string
+          updated_at?: string
+          username: string
+          ussd_code?: string | null
+        }
+        Update: {
+          balance?: number
+          commission_rate?: number
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          password_hash?: string
+          phone?: string | null
+          transactions_table?: string
+          updated_at?: string
+          username?: string
+          ussd_code?: string | null
+        }
+        Relationships: []
+      }
       balance_alerts: {
         Row: {
           created_at: string
