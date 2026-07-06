@@ -25,6 +25,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { LogOut, Wallet, TrendingUp, DollarSign, Hash } from "lucide-react";
+import BackgroundImageSlider from "@/components/BackgroundImageSlider";
 
 type DashboardData = {
   profile: any;
@@ -35,6 +36,7 @@ type DashboardData = {
     totalCommissions: number;
     availableBalance: number;
     transactionCount: number;
+    successfulCount: number;
   };
 };
 
@@ -109,8 +111,12 @@ const AffiliateDashboard = () => {
 
   if (loading || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading dashboard...</p>
+      <div className="min-h-screen w-full relative flex items-center justify-center">
+        <BackgroundImageSlider />
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-4 border-green-500 border-t-transparent animate-spin" />
+          <p className="text-gray-100 drop-shadow">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -118,203 +124,221 @@ const AffiliateDashboard = () => {
   const { profile, stats, transactions, withdrawals } = data;
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="bg-background border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold">Affiliate Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Welcome, {profile.full_name}</p>
+    <div className="min-h-screen w-full relative">
+      <BackgroundImageSlider />
+      <div className="relative z-10">
+        <header className="bg-black/55 backdrop-blur-md border-b border-white/15">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-white drop-shadow">Affiliate Dashboard</h1>
+              <p className="text-sm text-gray-200">Welcome, {profile.full_name}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={logout}
+              className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+            >
+              <LogOut className="w-4 h-4 mr-2" /> Logout
+            </Button>
           </div>
-          <Button variant="outline" size="sm" onClick={logout}>
-            <LogOut className="w-4 h-4 mr-2" /> Logout
-          </Button>
-        </div>
-      </header>
+        </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        {/* Profile */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile Details</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div>
-              <p className="text-muted-foreground">Full Name</p>
-              <p className="font-medium">{profile.full_name}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Username</p>
-              <p className="font-medium">{profile.username}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Phone</p>
-              <p className="font-medium">{profile.phone || "-"}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Email</p>
-              <p className="font-medium">{profile.email || "-"}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground flex items-center gap-1">
-                <Hash className="w-3 h-3" /> Assigned USSD Code
-              </p>
-              <p className="font-medium">{profile.ussd_code || "-"}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Commission Rate</p>
-              <p className="font-medium">{profile.commission_rate}%</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard icon={TrendingUp} label="Total Sales" value={fmt(stats.totalSales)} />
-          <StatCard icon={DollarSign} label="Total Commissions" value={fmt(stats.totalCommissions)} />
-          <StatCard icon={Wallet} label="Available Balance" value={fmt(stats.availableBalance)} />
-          <StatCard icon={Hash} label="Transactions" value={String(stats.transactionCount)} />
-        </div>
-
-        <div className="flex justify-end">
-          <Dialog open={wdOpen} onOpenChange={setWdOpen}>
-            <DialogTrigger asChild>
-              <Button>Request Withdrawal</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Request Withdrawal</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Available: <span className="font-semibold">{fmt(stats.availableBalance)}</span>
+        <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+          {/* Profile */}
+          <Card className="bg-black/50 backdrop-blur-md border border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white">Profile Details</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <ProfileField label="Full Name" value={profile.full_name} />
+              <ProfileField label="Username" value={profile.username} />
+              <ProfileField label="Phone" value={profile.phone || "-"} />
+              <ProfileField label="Email" value={profile.email || "-"} />
+              <div>
+                <p className="text-gray-300 flex items-center gap-1">
+                  <Hash className="w-3 h-3" /> Assigned USSD Code
                 </p>
-                <div>
-                  <Label htmlFor="amount">Amount (GHS)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    value={wdAmount}
-                    onChange={(e) => setWdAmount(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="notes">Notes (optional)</Label>
-                  <Textarea
-                    id="notes"
-                    value={wdNotes}
-                    onChange={(e) => setWdNotes(e.target.value)}
-                    placeholder="Momo number, bank details, etc."
-                  />
-                </div>
+                <p className="font-medium text-white">{profile.ussd_code || "-"}</p>
               </div>
-              <DialogFooter>
-                <Button onClick={submitWithdrawal} disabled={submitting}>
-                  {submitting ? "Submitting..." : "Submit Request"}
+              <div>
+                <p className="text-gray-300">Commission Rate</p>
+                <p className="font-medium text-white">{profile.commission_rate}%</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard icon={TrendingUp} label="Total Sales" value={fmt(stats.totalSales)} />
+            <StatCard icon={DollarSign} label="Total Commissions" value={fmt(stats.totalCommissions)} />
+            <StatCard icon={Wallet} label="Available Balance" value={fmt(stats.availableBalance)} />
+            <StatCard icon={Hash} label="Transactions" value={String(stats.transactionCount)} />
+          </div>
+
+          <div className="flex justify-end">
+            <Dialog open={wdOpen} onOpenChange={setWdOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-green-700 hover:bg-green-800 text-white border border-green-500/50">
+                  <Wallet className="w-4 h-4 mr-2" /> Request Withdrawal
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+              </DialogTrigger>
+              <DialogContent className="bg-slate-900 border-white/20">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Request Withdrawal</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-200">
+                    Available: <span className="font-semibold text-white">{fmt(stats.availableBalance)}</span>
+                  </p>
+                  <div>
+                    <Label htmlFor="amount" className="text-gray-100">Amount (GHS)</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      value={wdAmount}
+                      onChange={(e) => setWdAmount(e.target.value)}
+                      className="bg-white/10 border-white/25 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="notes" className="text-gray-100">Notes (optional)</Label>
+                    <Textarea
+                      id="notes"
+                      value={wdNotes}
+                      onChange={(e) => setWdNotes(e.target.value)}
+                      placeholder="Momo number, bank details, etc."
+                      className="bg-white/10 border-white/25 text-white placeholder:text-gray-400"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    onClick={submitWithdrawal}
+                    disabled={submitting}
+                    className="bg-green-700 hover:bg-green-800 text-white"
+                  >
+                    {submitting ? "Submitting..." : "Submit Request"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
 
-        {/* Recent transactions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            {transactions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No transactions yet.</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Reference</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Qty</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.slice(0, 50).map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell className="text-xs">
-                        {new Date(t.created_at).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">{t.reference}</TableCell>
-                      <TableCell>{t.phone_number}</TableCell>
-                      <TableCell>{t.product}</TableCell>
-                      <TableCell>{t.quantity}</TableCell>
-                      <TableCell>{fmt(Number(t.amount))}</TableCell>
-                      <TableCell>
-                        <Badge variant={t.status === "success" ? "default" : "secondary"}>
-                          {t.status}
-                        </Badge>
-                      </TableCell>
+          {/* Recent transactions */}
+          <Card className="bg-black/50 backdrop-blur-md border border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white">Recent Transactions</CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              {transactions.length === 0 ? (
+                <p className="text-sm text-gray-200">No transactions yet.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10 hover:bg-transparent">
+                      <TableHead className="text-gray-200">Date</TableHead>
+                      <TableHead className="text-gray-200">Reference</TableHead>
+                      <TableHead className="text-gray-200">Phone</TableHead>
+                      <TableHead className="text-gray-200">Product</TableHead>
+                      <TableHead className="text-gray-200">Qty</TableHead>
+                      <TableHead className="text-gray-200">Amount</TableHead>
+                      <TableHead className="text-gray-200">Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.slice(0, 50).map((t) => (
+                      <TableRow key={t.id} className="border-white/10">
+                        <TableCell className="text-xs text-gray-100">
+                          {new Date(t.created_at).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-gray-100">{t.reference}</TableCell>
+                        <TableCell className="text-gray-100">{t.phone_number}</TableCell>
+                        <TableCell className="text-gray-100">{t.product}</TableCell>
+                        <TableCell className="text-gray-100">{t.quantity}</TableCell>
+                        <TableCell className="text-gray-100">{fmt(Number(t.amount))}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={String(t.status).toLowerCase() === "success" ? "default" : "secondary"}
+                            className={
+                              String(t.status).toLowerCase() === "success"
+                                ? "bg-green-700 text-white hover:bg-green-700"
+                                : "bg-white/15 text-gray-100 hover:bg-white/15"
+                            }
+                          >
+                            {t.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Withdrawal history */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Withdrawal History</CardTitle>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            {withdrawals.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No withdrawal requests yet.</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Requested</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Notes</TableHead>
-                    <TableHead>Processed</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {withdrawals.map((w) => (
-                    <TableRow key={w.id}>
-                      <TableCell className="text-xs">
-                        {new Date(w.requested_at).toLocaleString()}
-                      </TableCell>
-                      <TableCell>{fmt(Number(w.amount))}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            w.status === "paid"
-                              ? "default"
-                              : w.status === "rejected"
-                                ? "destructive"
-                                : "secondary"
-                          }
-                        >
-                          {w.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs">{w.notes || "-"}</TableCell>
-                      <TableCell className="text-xs">
-                        {w.processed_at ? new Date(w.processed_at).toLocaleString() : "-"}
-                      </TableCell>
+          {/* Withdrawal history */}
+          <Card className="bg-black/50 backdrop-blur-md border border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white">Withdrawal History</CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              {withdrawals.length === 0 ? (
+                <p className="text-sm text-gray-200">No withdrawal requests yet.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10 hover:bg-transparent">
+                      <TableHead className="text-gray-200">Requested</TableHead>
+                      <TableHead className="text-gray-200">Amount</TableHead>
+                      <TableHead className="text-gray-200">Status</TableHead>
+                      <TableHead className="text-gray-200">Notes</TableHead>
+                      <TableHead className="text-gray-200">Processed</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+                  </TableHeader>
+                  <TableBody>
+                    {withdrawals.map((w) => (
+                      <TableRow key={w.id} className="border-white/10">
+                        <TableCell className="text-xs text-gray-100">
+                          {new Date(w.requested_at).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-gray-100">{fmt(Number(w.amount))}</TableCell>
+                        <TableCell>
+                          <Badge
+                            className={
+                              w.status === "paid"
+                                ? "bg-green-700 text-white hover:bg-green-700"
+                                : w.status === "rejected"
+                                  ? "bg-red-600 text-white hover:bg-red-600"
+                                  : "bg-white/15 text-gray-100 hover:bg-white/15"
+                            }
+                          >
+                            {w.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-gray-100">{w.notes || "-"}</TableCell>
+                        <TableCell className="text-xs text-gray-100">
+                          {w.processed_at ? new Date(w.processed_at).toLocaleString() : "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </main>
+      </div>
     </div>
   );
 };
+
+const ProfileField = ({ label, value }: { label: string; value: string }) => (
+  <div>
+    <p className="text-gray-300">{label}</p>
+    <p className="font-medium text-white">{value}</p>
+  </div>
+);
 
 const StatCard = ({
   icon: Icon,
@@ -325,15 +349,15 @@ const StatCard = ({
   label: string;
   value: string;
 }) => (
-  <Card>
+  <Card className="bg-black/50 backdrop-blur-md border border-white/10 hover:border-green-500/60 transition-all duration-300">
     <CardContent className="p-4">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Icon className="w-5 h-5 text-primary" />
+        <div className="w-10 h-10 rounded-lg bg-green-600/30 border border-green-500/40 flex items-center justify-center">
+          <Icon className="w-5 h-5 text-green-400" />
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-lg font-bold">{value}</p>
+          <p className="text-xs text-gray-200">{label}</p>
+          <p className="text-lg font-bold text-white">{value}</p>
         </div>
       </div>
     </CardContent>
