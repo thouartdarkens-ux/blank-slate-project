@@ -1,1 +1,0 @@
-ALTER TABLE public.data_transactions ADD COLUMN IF NOT EXISTS paystack_id text;
