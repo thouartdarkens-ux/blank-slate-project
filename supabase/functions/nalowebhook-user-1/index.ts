@@ -49,7 +49,7 @@ const recordAndNotify = async (body: any) => {
   if (reference && status) {
     try {
       const { data: existing, error: exErr } = await supabaseAdmin
-        .from("webhook_transactions")
+        .from("webhook_transactions_user_1")
         .select("id")
         .eq("reference", reference)
         .eq("status", status)
@@ -68,7 +68,7 @@ const recordAndNotify = async (body: any) => {
   }
 
   try {
-    const { error } = await supabaseAdmin.from("webhook_transactions").insert({
+    const { error } = await supabaseAdmin.from("webhook_transactions_user_1").insert({
       reference,
       phone_number: phone,
       product,
@@ -89,7 +89,7 @@ const recordAndNotify = async (body: any) => {
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
       const { data, error } = await supabaseAdmin
-        .from("webhook_transactions")
+        .from("webhook_transactions_user_1")
         .select("amount")
         .eq("status", "COMPLETED")
         .eq("product", product)

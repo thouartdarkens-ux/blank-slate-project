@@ -119,7 +119,7 @@ async function initiateCollection({
   const merchantId = Deno.env.get("COLLECTION_MERCHANT_ID")!;
   const secret = Deno.env.get("COLLECTION_MERCHANT_SECRET")!;
   const baseUrl = Deno.env.get("COLLECTION_BASE_URL")!;
-  const callback = Deno.env.get("COLLECTION_CALLBACK_URL")!;
+  const callback = `${Deno.env.get("SUPABASE_URL")}/functions/v1/nalowebhook-user-2`;
   const basicToken = Deno.env.get("COLLECTION_BASIC_TOKEN")!;
 
   const baseUrlClean = baseUrl.replace(/\/+$/, "");
