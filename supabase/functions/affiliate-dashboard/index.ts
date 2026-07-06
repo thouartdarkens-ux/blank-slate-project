@@ -12,6 +12,12 @@ const ALLOWED_TABLES = new Set([
   "webhook_transactions_user_2",
 ]);
 
+const isSuccessful = (status: string) =>
+  /^(success|successful|completed|paid)$/i.test((status || "").trim());
+
+const isPaidOut = (status: string) =>
+  /^(paid|completed|approved)$/i.test((status || "").trim());
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -43,6 +49,8 @@ Deno.serve(async (req) => {
       });
     }
 
+    const commissionRate = Number(affiliate.commission_rate || 0);
+
     const tableName = affiliate.transactions_table;
     let transactions: any[] = [];
     if (ALLOWED_TABLES.has(tableName)) {
@@ -54,9 +62,13 @@ Deno.serve(async (req) => {
       transactions = txs || [];
     }
 
-    const successful = transactions.filter((t) => (t.status || "").toLowerCase() === "success" || (t.status || "").toLowerCase() === "successful");
+    // Only count transactions that have a valid amount and a successful status.
+    const successful = transactions.filter(
+      (t) => isSuccessful(t.status) && Number(t.amount || 0) > 0,
+    );
+
     const totalSales = successful.reduce((s, t) => s + Number(t.amount || 0), 0);
-    const totalCommissions = (totalSales * Number(affiliate.commission_rate || 0)) / 100;
+    const totalCommissions = (totalSales * commissionRate) / 100;
 
     const { data: withdrawals } = await supabase
       .from("affiliate_withdrawals")
@@ -64,11 +76,18 @@ Deno.serve(async (req) => {
       .eq("affiliate_id", affiliate.id)
       .order("requested_at", { ascending: false });
 
-    const paidOrPending = (withdrawals || []).reduce(
-      (s, w) => s + (w.status === "rejected" ? 0 : Number(w.amount || 0)),
-      0,
-    );
-    const availableBalance = Math.max(totalCommissions - paidOrPending, 0);
+    // Only withdrawals that have been paid out reduce the available balance.
+    // Pending requests are shown separately so affiliates can see them, but
+    // they are not yet deducted (they may be rejected).
+    const paidOut = (withdrawals || [])
+      .filter((w) => isPaidOut(w.status))
+      .reduce((s, w) => s + Number(w.amount || 0), 0);
+
+    const pendingWithdrawals = (withdrawals || [])
+      .filter((w) => w.status === "pending")
+      .reduce((s, w) => s + Number(w.amount || 0), 0);
+
+    const availableBalance = Math.max(totalCommissions - paidOut - pendingWithdrawals, 0);
 
     const { password_hash: _ph, ...profile } = affiliate;
 
@@ -82,6 +101,7 @@ Deno.serve(async (req) => {
           totalCommissions,
           availableBalance,
           transactionCount: transactions.length,
+          pendingWithdrawals,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
