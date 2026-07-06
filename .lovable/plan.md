@@ -1,118 +1,81 @@
-# Plan: Switch Checkout to Xcel Payment Link API
+## Plan: Replace Moolre payment in `naloussd` with new collection API
 
-## Overview
+Replace the Moolre `initiatePayment` call inside `supabase/functions/naloussd/index.ts` with a new `initiateCollection` call hitting the new collection endpoint, signed with HMAC-SHA256 and authenticated with a pre-issued Basic Auth token.
 
-Replace the current URL-redirect payment flow with a POST API call to Xcel's `generate-payment-link` endpoint. Instead of building a long URL with query parameters and redirecting directly, we'll call an edge function that securely makes the API request and returns a payment link for redirect.
+### 1. Secrets to add (via secrets tool)
 
-## Current Flow vs New Flow
+- `COLLECTION_BASE_URL` — e.g. `https://api.<provider>.com` (the `{{baseURL}}`)
+- `COLLECTION_MERCHANT_ID` — e.g. `hCuK9z9yoYMZ8yvtH7LUHP`
+- `COLLECTION_MERCHANT_SECRET` — HMAC key (server-side only)
+- `COLLECTION_BASIC_TOKEN` — the pre-issued token, sent verbatim as `Authorization: Basic <token>` (e.g. `fc4c5880…8070`)
+- `COLLECTION_CALLBACK_URL` — public callback URL the provider will hit
 
-**Current:** Checkout form collects user info -> builds a long URL with public key, amount, metadata as query params -> redirects browser to that URL.
+### 2. New helper in `naloussd/index.ts`
 
-**New:** Checkout form collects user info -> calls a Supabase edge function -> edge function POSTs to Xcel API with merchant credentials -> receives payment link -> browser redirects to that payment link.
+```ts
+async function hmacSha256Hex(key: string, message: string) {
+  const enc = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw", enc.encode(key),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(message));
+  return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
 
-## Steps
+async function initiateCollection({
+  msisdn, accountName, amount, reference, network, product, qty,
+}: {
+  msisdn: string; accountName: string; amount: number;
+  reference: string; network: string;
+  product: "bece" | "wassce"; qty: number;
+}) {
+  const merchantId = Deno.env.get("COLLECTION_MERCHANT_ID")!;
+  const secret     = Deno.env.get("COLLECTION_MERCHANT_SECRET")!;
+  const baseUrl    = Deno.env.get("COLLECTION_BASE_URL")!;
+  const callback   = Deno.env.get("COLLECTION_CALLBACK_URL")!;
+  const basicToken = Deno.env.get("COLLECTION_BASIC_TOKEN")!;
 
-### Step 1: Add Required Secrets
+  // Concatenate in order, no separators
+  const message = `${merchantId}${msisdn}${amount}${reference}`;
+  const trans_hash = await hmacSha256Hex(secret, message);
 
-Two secrets need to be securely stored (they should NOT be in client-side code):
+  const body = {
+    merchant_id: merchantId,
+    service_name: "MOMO_TRANSACTION",
+    trans_hash,
+    account_number: msisdn,
+    account_name: accountName || "USSD Customer",
+    description: `${product.toUpperCase()} checker x${qty}`,
+    reference,
+    callback,
+    network,                  // "MTN" | "TELECEL" | "AT"
+    amount,
+    extra_data: { product, amount, quantity: qty },
+  };
 
-- `XCEL_MERCHANT_ID` - Your Xcel merchant ID
-- `XCEL_PUBLIC_KEY` - Your Xcel public key use the already available merchant id from the existing code and for the publick.key use XCLPUBK_LIVE-7845a9a0b3a5b15b89a5de62298c56acc3b56d0a
-
-These will be requested from you before any code changes proceed.
-
-### Step 2: Create New Edge Function - `generate-payment-link`
-
-Create `supabase/functions/generate-payment-link/index.ts` that:
-
-- Accepts POST requests with: amount, products, customer info, metadata, quantity, voucher type
-- Reads `XCEL_MERCHANT_ID` and `XCEL_PUBLIC_KEY` from environment secrets
-- Constructs the request body matching the Xcel API format:
-  - `amount`, `products` array (with product_id and amount), `currency: "GHS"`, `channel: "WEB"`
-  - `client_transaction_id` (generated unique ID)
-  - `customer_name`, `customer_email`, `customer_phone`
-  - `description`
-  - `metadata` (including phone_number, email, quantity for the webhook)
-  - `redirect_url` pointing to your `/payment-success` page
-  - `webhook_url` pointing to your existing `xcel-webhook` edge function
-- POSTs to `https://api.xcelapp.com/transactions-service/paygate/generate-payment-link` with the `X-MERCHANT-ID` and `X-PUBLIC-KEY` headers
-- Returns the `payment_link` from the response to the client
-
-### Step 3: Update `supabase/config.toml`
-
-Add the new function with JWT verification disabled (since it's called from the frontend):
-
-```
-[functions.generate-payment-link]
-verify_jwt = false
-```
-
-### Step 4: Update Checkout Page (`src/pages/Checkout.tsx`)
-
-Modify the `onSubmit` function to:
-
-- Call the new `generate-payment-link` edge function via `supabase.functions.invoke()`
-- Pass: amount, quantity, voucher type, product_id, customer name/email/phone
-- Show a loading state while the API call is in progress
-- On success: redirect to the `payment_link` from the response
-- On error: show a toast error message
-
-The product ID mapping (`getProductId`) and form UI remain unchanged.
-
-### Step 5: Fix Build Error in `get-voucher-history`
-
-Fix the TypeScript error where `error` is of type `unknown` by adding proper type checking:
-
-- Change `error.message` to `error instanceof Error ? error.message : 'Unknown error'`
-
-## Technical Details
-
-**Edge Function Request to Xcel API:**
-
-```
-POST https://api.xcelapp.com/transactions-service/paygate/generate-payment-link
-Headers:
-  X-MERCHANT-ID: (from secret)
-  X-PUBLIC-KEY: (from secret)
-  Content-Type: application/json
-Body:
-  {
-    "amount": "26.00",
-    "products": [{ "product_id": "DN0X1U1JL", "amount": "26.00" }],
-    "currency": "GHS",
-    "client_transaction_id": "CUD{timestamp}-{random}",
-    "customer_name": "John Doe",
-    "customer_email": "john@example.com",
-    "customer_phone": "233XXXXXXXXX",
-    "description": "Purchase of 1 WASSCE voucher",
-    "channel": "WEB",
-    "metadata": { "phone_number": "...", "email": "...", "quantity": 1 },
-    "redirect_url": "https://buycheckerpins.com/payment-success",
-    "webhook_url": "https://ngqlvcbkbxoqpdvmofto.supabase.co/functions/v1/xcel-webhook"
-  }
-```
-
-**Expected Response from Xcel:**
-
-```json
-{
-  "status": "PENDING",
-  "data": {
-    "payment_link": "https://paygate.xcelapp.com/v1/main/xcel?CODE...",
-    "transaction_id": "...",
-    ...
-  }
+  const res = await fetch(`${baseUrl}/clientapi/collection/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Basic ${basicToken}`,
+    },
+    body: JSON.stringify(body),
+  });
+  return await res.json();
 }
 ```
 
-The client then redirects to `data.payment_link`. After payment, the user is redirected to `/payment-success` and the webhook handles voucher fulfillment as before.
+### 3. Wire into WASSCE_CONFIRM / BECE_CONFIRM
 
-## Files Changed
+Replace `initiatePayment({...})` with `initiateCollection({...})`. Pass `NETWORK_RAW` directly (e.g. `"MTN"`), `product: "wassce"` or `"bece"`, `qty`, `amount: total`, and a unique `reference` per attempt (e.g. `MV-${Date.now()}-${shortRand}`). Drop `NETWORK_CODE`, `CHANNEL_MAP`, and the Moolre `initiatePayment` from this file.
 
+### 4. Non-goals
 
-| File                                                | Change                             |
-| --------------------------------------------------- | ---------------------------------- |
-| `supabase/functions/generate-payment-link/index.ts` | New edge function                  |
-| `supabase/config.toml`                              | Add function config                |
-| `src/pages/Checkout.tsx`                            | Replace URL redirect with API call |
-| `supabase/functions/get-voucher-history/index.ts`   | Fix TypeScript build error         |
+- No DB migration (sessions table unchanged).
+- No frontend changes.
+- Provider callback/webhook handler is a follow-up step.
+
+### Open question
+
+`account_name` — USSD has no name input. Default to `"USSD Customer"` unless you'd prefer to look it up from the email-linked profile.
