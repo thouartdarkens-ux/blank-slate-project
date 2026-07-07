@@ -211,6 +211,25 @@ const AffiliateDashboard = () => {
                   <p className="text-sm text-muted-foreground">
                     Available: <span className="font-semibold">{fmt(stats.availableBalance)}</span>
                   </p>
+                  <div className="rounded-md border bg-muted/50 p-3 text-sm space-y-1">
+                    <p className="font-medium">Payout Mobile Money Details</p>
+                    <p>
+                      <span className="text-muted-foreground">Number: </span>
+                      <span className="font-mono">{profile.momo_number || "Not set"}</span>
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Name: </span>
+                      <span>{profile.momo_name || "Not set"}</span>
+                    </p>
+                    {(!profile.momo_number || !profile.momo_name) && (
+                      <p className="text-xs text-destructive">
+                        Contact support to set your Momo details before requesting a withdrawal.
+                      </p>
+                    )}
+                  </div>
+                  <div className="rounded-md border border-yellow-300 bg-yellow-50 p-3 text-xs text-yellow-900">
+                    All withdrawals are processed between <span className="font-semibold">10:00 AM and 5:00 PM</span>.
+                  </div>
                   <div>
                     <Label htmlFor="amount">Amount (GHS)</Label>
                     <Input
@@ -226,7 +245,7 @@ const AffiliateDashboard = () => {
                       id="notes"
                       value={wdNotes}
                       onChange={(e) => setWdNotes(e.target.value)}
-                      placeholder="Momo number, bank details, etc."
+                      placeholder="Any additional details..."
                     />
                   </div>
                 </div>
