@@ -328,6 +328,48 @@ export type Database = {
         }
         Relationships: []
       }
+      nalo_endpoint_pairs: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          network: string | null
+          updated_at: string
+          ussd_function_name: string
+          ussd_function_url: string
+          webhook_function_name: string
+          webhook_function_url: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          network?: string | null
+          updated_at?: string
+          ussd_function_name: string
+          ussd_function_url: string
+          webhook_function_name: string
+          webhook_function_url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          network?: string | null
+          updated_at?: string
+          ussd_function_name?: string
+          ussd_function_url?: string
+          webhook_function_name?: string
+          webhook_function_url?: string
+        }
+        Relationships: []
+      }
       nalo_ussd_sessions: {
         Row: {
           created_at: string

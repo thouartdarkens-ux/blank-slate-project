@@ -88,6 +88,12 @@ const AffiliateLogin = () => {
                 <Phone className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-400" />
                 <span>Contact 0557956020 to request an affiliate account.</span>
               </div>
+              <div className="text-center text-sm text-gray-200">
+                Don't have an account?{" "}
+                <Link to="/affiliate/register" className="text-green-400 hover:text-green-300 underline">
+                  Register
+                </Link>
+              </div>
               <div className="text-center pt-2">
                 <Link
                   to="/affiliate"

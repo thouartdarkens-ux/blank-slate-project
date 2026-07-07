@@ -62,7 +62,6 @@ Deno.serve(async (req) => {
       transactions = txs || [];
     }
 
-    // Only count transactions that have a valid amount and a successful status.
     const successful = transactions.filter(
       (t) => isSuccessful(t.status) && Number(t.amount || 0) > 0,
     );
@@ -76,20 +75,26 @@ Deno.serve(async (req) => {
       .eq("affiliate_id", affiliate.id)
       .order("requested_at", { ascending: false });
 
-    // Only withdrawals that have been paid out reduce the available balance.
-    // Pending requests are shown separately so affiliates can see them, but
-    // they are not yet deducted (they may be rejected).
     const paidOut = (withdrawals || [])
       .filter((w) => isPaidOut(w.status))
       .reduce((s, w) => s + Number(w.amount || 0), 0);
 
     const pendingWithdrawals = (withdrawals || [])
-      .filter((w) => w.status === "pending")
+      .filter((w) => (w.status || "").toLowerCase() === "pending")
       .reduce((s, w) => s + Number(w.amount || 0), 0);
 
     const availableBalance = Math.max(totalCommissions - paidOut - pendingWithdrawals, 0);
 
+    // Keep the stored balance column in sync so it can be referenced elsewhere
+    if (Number(affiliate.balance) !== availableBalance) {
+      await supabase
+        .from("affiliates")
+        .update({ balance: availableBalance, updated_at: new Date().toISOString() })
+        .eq("id", affiliate.id);
+    }
+
     const { password_hash: _ph, ...profile } = affiliate;
+    profile.balance = availableBalance;
 
     return new Response(
       JSON.stringify({

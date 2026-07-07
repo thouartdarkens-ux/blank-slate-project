@@ -11,6 +11,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import Affiliate from "./pages/Affiliate";
 import AffiliateLogin from "./pages/AffiliateLogin";
 import AffiliateDashboard from "./pages/AffiliateDashboard";
+import AffiliateRegister from "./pages/AffiliateRegister";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +35,7 @@ const App = () => {
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/affiliate" element={<Affiliate />} />
             <Route path="/affiliate/login" element={<AffiliateLogin />} />
+            <Route path="/affiliate/register" element={<AffiliateRegister />} />
             <Route path="/affiliate/dashboard" element={<AffiliateDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
