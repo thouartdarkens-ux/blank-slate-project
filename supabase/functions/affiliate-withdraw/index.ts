@@ -25,7 +25,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const affiliateId = token.split(".")[0];
+    // Token prefix is the affiliate's source_hook (set at login time)
+    const sessionKey = token.split(".")[0];
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -34,7 +35,7 @@ Deno.serve(async (req) => {
     const { data: affiliate, error: affErr } = await supabase
       .from("affiliates")
       .select("id, commission_rate, source_hook, balance, momo_number, momo_name")
-      .eq("id", affiliateId)
+      .eq("source_hook", sessionKey)
       .maybeSingle();
 
     if (affErr || !affiliate) {

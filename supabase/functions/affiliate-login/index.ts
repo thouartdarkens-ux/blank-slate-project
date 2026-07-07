@@ -49,8 +49,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Simple session token = affiliate.id + random suffix (stored in localStorage)
-    const token = `${affiliate.id}.${crypto.randomUUID()}`;
+    // Session token = source_hook + random suffix (stored in localStorage).
+    // The dashboard/withdraw functions look up the affiliate by source_hook.
+    const sessionKey = affiliate.source_hook || affiliate.id;
+    const token = `${sessionKey}.${crypto.randomUUID()}`;
     const { password_hash: _ph, ...profile } = affiliate;
 
     return new Response(JSON.stringify({ token, affiliate: profile }), {
