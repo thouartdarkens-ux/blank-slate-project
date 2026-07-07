@@ -121,6 +121,32 @@ const AffiliateDashboard = () => {
     }
   };
 
+  const openMomoEditor = () => {
+    setMomoNumber(data?.profile?.momo_number || "");
+    setMomoName(data?.profile?.momo_name || "");
+    setMomoOpen(true);
+  };
+
+  const saveMomo = async () => {
+    if (!/^0\d{9}$/.test(momoNumber.trim()))
+      return toast.error("Enter a valid 10-digit Momo number starting with 0");
+    if (momoName.trim().length < 2) return toast.error("Enter the Momo account name");
+    setSavingMomo(true);
+    try {
+      const { data: res, error } = await supabase.functions.invoke("affiliate-update-momo", {
+        body: { token, momo_number: momoNumber.trim(), momo_name: momoName.trim() },
+      });
+      if (error || res?.error) throw new Error(res?.error || error?.message);
+      toast.success("Momo details saved");
+      setMomoOpen(false);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to save");
+    } finally {
+      setSavingMomo(false);
+    }
+  };
+
   if (loading || !data) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center relative">
