@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { LogOut, Wallet, TrendingUp, DollarSign, Hash, ArrowLeft, Clock } from "lucide-react";
+import { LogOut, Wallet, TrendingUp, DollarSign, Hash, ArrowLeft, Clock, Smartphone, Pencil } from "lucide-react";
 import BackgroundImageSlider from "@/components/BackgroundImageSlider";
 import { Link } from "react-router-dom";
 
@@ -59,6 +59,10 @@ const AffiliateDashboard = () => {
   const [wdAmount, setWdAmount] = useState("");
   const [wdNotes, setWdNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [momoOpen, setMomoOpen] = useState(false);
+  const [momoNumber, setMomoNumber] = useState("");
+  const [momoName, setMomoName] = useState("");
+  const [savingMomo, setSavingMomo] = useState(false);
 
   const token = localStorage.getItem("affiliate_token");
 
@@ -114,6 +118,32 @@ const AffiliateDashboard = () => {
       toast.error(e.message || "Failed");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const openMomoEditor = () => {
+    setMomoNumber(data?.profile?.momo_number || "");
+    setMomoName(data?.profile?.momo_name || "");
+    setMomoOpen(true);
+  };
+
+  const saveMomo = async () => {
+    if (!/^0\d{9}$/.test(momoNumber.trim()))
+      return toast.error("Enter a valid 10-digit Momo number starting with 0");
+    if (momoName.trim().length < 2) return toast.error("Enter the Momo account name");
+    setSavingMomo(true);
+    try {
+      const { data: res, error } = await supabase.functions.invoke("affiliate-update-momo", {
+        body: { token, momo_number: momoNumber.trim(), momo_name: momoName.trim() },
+      });
+      if (error || res?.error) throw new Error(res?.error || error?.message);
+      toast.success("Momo details saved");
+      setMomoOpen(false);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to save");
+    } finally {
+      setSavingMomo(false);
     }
   };
 
@@ -177,6 +207,70 @@ const AffiliateDashboard = () => {
               <ProfileItem label="Commission Rate" value={`${profile.commission_rate}%`} />
             </CardContent>
           </Card>
+
+          {/* Momo Payout Details */}
+          <Card className="bg-black/50 backdrop-blur-md border border-white/10">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-white flex items-center gap-2">
+                <Smartphone className="w-5 h-5" /> Mobile Money Payout Details
+              </CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={openMomoEditor}
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+              >
+                <Pencil className="w-4 h-4 mr-2" />
+                {profile.momo_number ? "Edit" : "Set Details"}
+              </Button>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <ProfileItem label="Momo Number" value={profile.momo_number || "Not set"} />
+              <ProfileItem label="Momo Name" value={profile.momo_name || "Not set"} />
+            </CardContent>
+          </Card>
+
+          <Dialog open={momoOpen} onOpenChange={setMomoOpen}>
+            <DialogContent className="bg-white">
+              <DialogHeader>
+                <DialogTitle>Mobile Money Details</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Withdrawals will be sent to this Mobile Money account.
+                </p>
+                <div>
+                  <Label htmlFor="momo-number">Momo Number</Label>
+                  <Input
+                    id="momo-number"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="0551234567"
+                    value={momoNumber}
+                    onChange={(e) => setMomoNumber(e.target.value.replace(/\D/g, ""))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="momo-name">Account Name</Label>
+                  <Input
+                    id="momo-name"
+                    placeholder="Full name on Momo account"
+                    value={momoName}
+                    onChange={(e) => setMomoName(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={saveMomo}
+                  disabled={savingMomo}
+                  className="bg-green-700 hover:bg-green-800 text-white"
+                >
+                  {savingMomo ? "Saving..." : "Save Details"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
