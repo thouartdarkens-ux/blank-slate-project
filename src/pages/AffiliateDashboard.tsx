@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { LogOut, Wallet, TrendingUp, DollarSign, Hash, ArrowLeft, Clock } from "lucide-react";
+import { LogOut, Wallet, TrendingUp, DollarSign, Hash, ArrowLeft, Clock, Smartphone, Pencil } from "lucide-react";
 import BackgroundImageSlider from "@/components/BackgroundImageSlider";
 import { Link } from "react-router-dom";
 
