@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
 
     const { data: affiliate, error: affErr } = await supabase
       .from("affiliates")
-      .select("id, commission_rate, transactions_table, balance")
+      .select("id, commission_rate, transactions_table, balance, momo_number, momo_name")
       .eq("id", affiliateId)
       .maybeSingle();
 
