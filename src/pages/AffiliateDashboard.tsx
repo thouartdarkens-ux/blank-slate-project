@@ -59,6 +59,10 @@ const AffiliateDashboard = () => {
   const [wdAmount, setWdAmount] = useState("");
   const [wdNotes, setWdNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [momoOpen, setMomoOpen] = useState(false);
+  const [momoNumber, setMomoNumber] = useState("");
+  const [momoName, setMomoName] = useState("");
+  const [savingMomo, setSavingMomo] = useState(false);
 
   const token = localStorage.getItem("affiliate_token");
 
