@@ -97,6 +97,8 @@ Deno.serve(async (req) => {
         amount: amt,
         notes: notes || null,
         status: "pending",
+        momo_number: affiliate.momo_number || null,
+        momo_name: affiliate.momo_name || null,
       })
       .select()
       .single();
