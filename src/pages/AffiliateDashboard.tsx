@@ -208,6 +208,70 @@ const AffiliateDashboard = () => {
             </CardContent>
           </Card>
 
+          {/* Momo Payout Details */}
+          <Card className="bg-black/50 backdrop-blur-md border border-white/10">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-white flex items-center gap-2">
+                <Smartphone className="w-5 h-5" /> Mobile Money Payout Details
+              </CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={openMomoEditor}
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+              >
+                <Pencil className="w-4 h-4 mr-2" />
+                {profile.momo_number ? "Edit" : "Set Details"}
+              </Button>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <ProfileItem label="Momo Number" value={profile.momo_number || "Not set"} />
+              <ProfileItem label="Momo Name" value={profile.momo_name || "Not set"} />
+            </CardContent>
+          </Card>
+
+          <Dialog open={momoOpen} onOpenChange={setMomoOpen}>
+            <DialogContent className="bg-white">
+              <DialogHeader>
+                <DialogTitle>Mobile Money Details</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Withdrawals will be sent to this Mobile Money account.
+                </p>
+                <div>
+                  <Label htmlFor="momo-number">Momo Number</Label>
+                  <Input
+                    id="momo-number"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="0551234567"
+                    value={momoNumber}
+                    onChange={(e) => setMomoNumber(e.target.value.replace(/\D/g, ""))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="momo-name">Account Name</Label>
+                  <Input
+                    id="momo-name"
+                    placeholder="Full name on Momo account"
+                    value={momoName}
+                    onChange={(e) => setMomoName(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={saveMomo}
+                  disabled={savingMomo}
+                  className="bg-green-700 hover:bg-green-800 text-white"
+                >
+                  {savingMomo ? "Saving..." : "Save Details"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard icon={TrendingUp} label="Total Sales" value={fmt(stats.totalSales)} />
