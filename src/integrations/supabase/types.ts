@@ -20,6 +20,8 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          momo_name: string | null
+          momo_number: string | null
           notes: string | null
           processed_at: string | null
           requested_at: string
@@ -31,6 +33,8 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
+          momo_name?: string | null
+          momo_number?: string | null
           notes?: string | null
           processed_at?: string | null
           requested_at?: string
@@ -42,6 +46,8 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          momo_name?: string | null
+          momo_number?: string | null
           notes?: string | null
           processed_at?: string | null
           requested_at?: string
@@ -66,6 +72,8 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          momo_name: string | null
+          momo_number: string | null
           password_hash: string
           phone: string | null
           transactions_table: string
@@ -80,6 +88,8 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          momo_name?: string | null
+          momo_number?: string | null
           password_hash: string
           phone?: string | null
           transactions_table: string
@@ -94,6 +104,8 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          momo_name?: string | null
+          momo_number?: string | null
           password_hash?: string
           phone?: string | null
           transactions_table?: string
