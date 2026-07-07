@@ -6,12 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const ALLOWED_TABLES = new Set([
-  "webhook_transactions",
-  "webhook_transactions_user_1",
-  "webhook_transactions_user_2",
-]);
-
 const isSuccessful = (status: string) =>
   /^(success|successful|completed|paid)$/i.test((status || "").trim());
 
@@ -39,7 +33,7 @@ Deno.serve(async (req) => {
 
     const { data: affiliate, error: affErr } = await supabase
       .from("affiliates")
-      .select("id, commission_rate, transactions_table, balance, momo_number, momo_name")
+      .select("id, commission_rate, source_hook, balance, momo_number, momo_name")
       .eq("id", affiliateId)
       .maybeSingle();
 
@@ -53,10 +47,11 @@ Deno.serve(async (req) => {
     // --- Recompute available balance server-side ---
     const commissionRate = Number(affiliate.commission_rate || 0);
     let transactions: any[] = [];
-    if (ALLOWED_TABLES.has(affiliate.transactions_table)) {
+    if (affiliate.source_hook) {
       const { data: txs } = await supabase
-        .from(affiliate.transactions_table)
+        .from("webhook_transactions")
         .select("amount,status")
+        .eq("source_hook", affiliate.source_hook)
         .limit(2000);
       transactions = txs || [];
     }

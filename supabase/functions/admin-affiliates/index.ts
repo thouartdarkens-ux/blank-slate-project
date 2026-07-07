@@ -13,7 +13,7 @@ const ALLOWED_FIELDS = [
   "phone",
   "ussd_code",
   "commission_rate",
-  "transactions_table",
+  "source_hook",
   "balance",
   "momo_number",
   "momo_name",
@@ -58,9 +58,9 @@ Deno.serve(async (req) => {
     if (data.password) payload.password_hash = await sha256(String(data.password));
 
     if (action === "insert") {
-      if (!payload.username || !payload.full_name || !payload.transactions_table || !payload.password_hash) {
+      if (!payload.username || !payload.full_name || !payload.source_hook || !payload.password_hash) {
         return new Response(
-          JSON.stringify({ error: "username, full_name, transactions_table and password required" }),
+          JSON.stringify({ error: "username, full_name, source_hook and password required" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }

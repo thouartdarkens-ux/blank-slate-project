@@ -6,12 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const ALLOWED_TABLES = new Set([
-  "webhook_transactions",
-  "webhook_transactions_user_1",
-  "webhook_transactions_user_2",
-]);
-
 const isSuccessful = (status: string) =>
   /^(success|successful|completed|paid)$/i.test((status || "").trim());
 
@@ -51,12 +45,13 @@ Deno.serve(async (req) => {
 
     const commissionRate = Number(affiliate.commission_rate || 0);
 
-    const tableName = affiliate.transactions_table;
+    const sourceHook = affiliate.source_hook;
     let transactions: any[] = [];
-    if (ALLOWED_TABLES.has(tableName)) {
+    if (sourceHook) {
       const { data: txs } = await supabase
-        .from(tableName)
+        .from("webhook_transactions")
         .select("*")
+        .eq("source_hook", sourceHook)
         .order("created_at", { ascending: false })
         .limit(200);
       transactions = txs || [];
