@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,18 +7,54 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { UserPlus, ArrowLeft } from "lucide-react";
 import BackgroundImageSlider from "@/components/BackgroundImageSlider";
+import { supabase } from "@/integrations/supabase/client";
 
 const AffiliateRegister = () => {
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.info("Registration coming soon. Please contact 0557956020 for now.");
+
+    if (password !== confirm) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (!/^0\d{9}$/.test(phone.trim())) {
+      toast.error("Enter a valid 10-digit phone number starting with 0");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { data: res, error } = await supabase.functions.invoke("affiliate-register", {
+        body: {
+          full_name: fullName.trim(),
+          username: username.trim(),
+          phone: phone.trim(),
+          email: email.trim() || undefined,
+          password,
+        },
+      });
+      if (error || res?.error) throw new Error(res?.error || error?.message);
+
+      toast.success("Account created! You can now sign in.");
+      navigate("/affiliate/login");
+    } catch (err: any) {
+      toast.error(err.message || "Registration failed");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -51,8 +87,10 @@ const AffiliateRegister = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-gray-100">Phone</Label>
-                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required
+                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} required maxLength={10}
+                  placeholder="0551234567"
                   className="bg-white/95 border-white/20 text-gray-900 placeholder:text-gray-500" />
+                <p className="text-xs text-gray-300">This number will receive transaction alerts from your USSD clone.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-gray-100">Email (optional)</Label>
@@ -69,9 +107,9 @@ const AffiliateRegister = () => {
                 <Input id="confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required
                   className="bg-white/95 border-white/20 text-gray-900 placeholder:text-gray-500" />
               </div>
-              <Button type="submit" size="lg"
+              <Button type="submit" size="lg" disabled={submitting}
                 className="w-full bg-green-700 hover:bg-green-800 text-white border border-green-500/50">
-                Create Account
+                {submitting ? "Creating Account..." : "Create Account"}
               </Button>
               <div className="text-center text-sm text-gray-200 pt-2">
                 Already have an account?{" "}
