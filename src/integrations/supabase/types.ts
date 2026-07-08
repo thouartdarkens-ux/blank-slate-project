@@ -72,10 +72,13 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          lifetime_commissions: number
           momo_name: string | null
           momo_number: string | null
           password_hash: string
           phone: string | null
+          sales_amount: number
+          sales_quantity: number
           source_hook: string
           updated_at: string
           username: string
@@ -90,10 +93,13 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          lifetime_commissions?: number
           momo_name?: string | null
           momo_number?: string | null
           password_hash: string
           phone?: string | null
+          sales_amount?: number
+          sales_quantity?: number
           source_hook: string
           updated_at?: string
           username: string
@@ -108,10 +114,13 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          lifetime_commissions?: number
           momo_name?: string | null
           momo_number?: string | null
           password_hash?: string
           phone?: string | null
+          sales_amount?: number
+          sales_quantity?: number
           source_hook?: string
           updated_at?: string
           username?: string
