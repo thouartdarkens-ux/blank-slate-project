@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const affiliateId = token.split(".")[0];
+    const sessionKey = token.split(".")[0].toUpperCase();
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     const { data: affiliate, error: affErr } = await supabase
       .from("affiliates")
       .select("id")
-      .eq("id", affiliateId)
+      .eq("source_hook", sessionKey)
       .maybeSingle();
 
     if (affErr || !affiliate) {
