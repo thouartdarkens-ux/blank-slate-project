@@ -219,7 +219,6 @@ const AffiliateDashboard = () => {
             <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <ProfileItem label="Full Name" value={profile.full_name} />
               <ProfileItem label="Username" value={profile.username} />
-              <ProfileItem label="Phone" value={profile.phone || "-"} />
               <ProfileItem label="Email" value={profile.email || "-"} />
               <ProfileItem
                 label="Assigned USSD Code"
