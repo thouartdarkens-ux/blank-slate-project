@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { USSD_TEMPLATE_B64, WEBHOOK_TEMPLATE_B64 } from "./templates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,27 +80,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build the clone suffix: initials + last 4 digits of phone
+    // Build the slug suffix: initials + last 4 digits of phone
     const init = initials(full_name);
     const phoneTail = cleanPhone.slice(-4);
     const suffix = `${init}${phoneTail}`;
-    const ussdSlug = `naloussd-${suffix}`;
-    const webhookSlug = `nalowebhook-${suffix}`;
-    const sourceHook = webhookSlug; // source_hook = webhook function name
-
-    // Decode templates and substitute placeholders
-    const ussdTemplate = decodeB64(USSD_TEMPLATE_B64);
-    const webhookTemplate = decodeB64(WEBHOOK_TEMPLATE_B64);
-
-    const ussdSource = ussdTemplate.replaceAll("{{CALLBACK_FUNCTION}}", webhookSlug);
-    const webhookSource = webhookTemplate
-      .replaceAll("{{SOURCE_HOOK}}", sourceHook)
-      .replaceAll("{{NOTIFICATION_PHONE}}", cleanPhone);
+    const ussdSlug = suffix;
+    const webhookSlug = suffix;
+    const sourceHook = webhookSlug.toUpperCase();
 
     // Hash password
     const passwordHash = await sha256(password);
 
-    // Insert the affiliate with source_hook
+    // Insert the affiliate with source_hook and demo ussd code
     const { data: affiliate, error: affErr } = await supabase
       .from("affiliates")
       .insert({
@@ -110,10 +100,12 @@ Deno.serve(async (req) => {
         full_name,
         email: email || null,
         phone: cleanPhone,
-        ussd_code: ussd_code || null,
+        ussd_code: ussd_code || "*920*665#",
         commission_rate: commission_rate ?? 17,
         source_hook: sourceHook,
         balance: 0,
+        ussd: "",
+        webhook: "",
       })
       .select()
       .single();
@@ -128,31 +120,6 @@ Deno.serve(async (req) => {
       throw affErr;
     }
 
-    // Insert the cloned endpoint pair record (source stored for later deployment)
-    const { error: pairErr } = await supabase.from("nalo_endpoint_pairs").insert({
-      name: `${init}-${phoneTail}`,
-      description: `Auto-cloned for affiliate ${full_name} (${username})`,
-      network: null,
-      ussd_function_name: ussdSlug,
-      ussd_function_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/${ussdSlug}`,
-      webhook_function_name: webhookSlug,
-      webhook_function_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/${webhookSlug}`,
-      is_active: true,
-      affiliate_id: affiliate.id,
-      source_hook: sourceHook,
-      notification_phone: cleanPhone,
-      affiliate_name: full_name,
-      is_template: false,
-      ussd_source: ussdSource,
-      webhook_source: webhookSource,
-      deployment_status: "pending",
-    });
-
-    if (pairErr) {
-      console.error("[affiliate-register] endpoint pair insert error:", pairErr);
-      // Affiliate was created; surface a partial-success message
-    }
-
     return new Response(
       JSON.stringify({
         success: true,
@@ -162,7 +129,7 @@ Deno.serve(async (req) => {
           webhook_slug: webhookSlug,
           source_hook: sourceHook,
         },
-        note: "Affiliate created. Endpoint pair cloned and stored — deploy the functions to activate.",
+        note: "Affiliate created.",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );

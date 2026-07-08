@@ -36,7 +36,7 @@ const sendSms = async (recipients: string[], message: string) => {
 };
 
 const recordAndNotify = async (body: any) => {
-  const SOURCE_HOOK = "nalowebhook-user-1";
+  const SOURCE_HOOK = (body?.extra_data?.agent_code || "nalowebhook-general").toUpperCase();
   const product = (body?.extra_data?.product || "").toString().toUpperCase();
   const phone = body?.extra_data?.phone_number || null;
   const quantity = Number(body?.extra_data?.quantity) || null;
@@ -86,35 +86,49 @@ const recordAndNotify = async (body: any) => {
     console.error("[nalowebhook] insert exception:", e);
   }
 
+  // Calculate and assign commission to the affiliate associated with source_hook
   if (status === "COMPLETED" && (product === "BECE" || product === "WASSCE")) {
     try {
-      console.log("calaculating daily profit")
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-      const { data, error } = await supabaseAdmin
-        .from("webhook_transactions")
-        .select("amount")
-        .eq("status", "COMPLETED")
-        .eq("product", product)
+      const { data: affiliate, error: affErr } = await supabaseAdmin
+        .from("affiliates")
+        .select("id, balance, lifetime_commissions, sales_quantity, sales_amount, commission_rate")
         .eq("source_hook", SOURCE_HOOK)
-        .gte("created_at", startOfDay.toISOString());
-      if (error) console.error("[nalowebhook] daily total error:", error);
-      const dailyTotal = (data || []).reduce(
-        (sum: number, r: any) => sum + (Number(r.amount) || 0),
-        0,
-      );
-      const msg = `Dear MOVA Consult, You have received GHS${amount} from ${phone} for ${quantity}${product} voucher. Your current daily balance is GHS ${dailyTotal.toFixed(2)}`;
-      await sendSms(["0557956020"], msg);
-      console.log("trans Alert sent", msg)
+        .maybeSingle();
+
+      if (affErr) console.error("[nalowebhook] affiliate lookup error:", affErr);
+      if (affiliate) {
+        const commissionRate = Number(affiliate.commission_rate) || 0;
+        const commission = +(amount * commissionRate / 100).toFixed(2);
+        const newBalance = +(Number(affiliate.balance) + commission).toFixed(2);
+        const newLifetime = +(Number(affiliate.lifetime_commissions) + commission).toFixed(2);
+        const newSalesQty = Number(affiliate.sales_quantity) + Number(quantity);
+        const newSalesAmount = +(Number(affiliate.sales_amount) + Number(amount)).toFixed(2);
+
+        const { error: updErr } = await supabaseAdmin
+          .from("affiliates")
+          .update({
+            balance: newBalance,
+            lifetime_commissions: newLifetime,
+            sales_quantity: newSalesQty,
+            sales_amount: newSalesAmount,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", affiliate.id);
+
+        if (updErr) console.error("[nalowebhook] affiliate update error:", updErr);
+        else console.log(`[nalowebhook] affiliate ${affiliate.id} updated: balance=${newBalance} lifetime=${newLifetime} salesQty=${newSalesQty} salesAmount=${newSalesAmount}`);
+      }
     } catch (e) {
-      console.error("[nalowebhook] daily total exception:", e);
+      console.error("[nalowebhook] balance calculation exception:", e);
     }
   }
+
 };
 
 const purchase =async (body:any)=>{
   console.log("Verifyin completion")
   const product = (body?.extra_data?.product || "").toString().toUpperCase();
+  const SOURCE_HOOK = (body?.extra_data?.agent_code || "").toUpperCase();
   if (product !== "BECE" && product !== "WASSCE") {
     console.log(`Non-voucher product=${product}, sending SMS notification`);
     if (body?.status === "COMPLETED") {
@@ -150,7 +164,7 @@ console.log("transuction completed callin voucher endpoint")
 
 const qty = Number(body?.extra_data?.quantity) || 0;
 const rawAmount = Number(body?.extra_data?.amount) || 0;
-const voucherAmount = +(rawAmount - 0.5 * qty).toFixed(2);
+const voucherAmount = +(rawAmount - 5 * qty).toFixed(2);
 
 const payload = {
   

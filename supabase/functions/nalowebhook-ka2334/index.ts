@@ -13,7 +13,7 @@ const supabaseAdmin = createClient(
 );
 
 // nalowebhook-ka2334 — substituted at clone time with this function's slug
-const SOURCE_HOOK = "nalowebhook-ka2334";
+const SOURCE_HOOK = "NALOWEBHOOK-KA2334";
 // 0241122334 — substituted at clone time with the affiliate's phone
 const NOTIFICATION_PHONE = "0241122334";
 const ARKESEL_API_KEY = "d21HelpLTHdvaWlwVGNLV2NTRFE";

@@ -13,29 +13,13 @@ function nalo(userid: string, msisdn: string, msg: string, keepOpen: boolean) {
 }
 
 const MAIN_MENU_PAGE_1 =
-  `Welcome to MOVA CONSULT\nMain Menu\n1. Buy BECE Checker\n2. Buy WASSCE/NOVDEC Checker\n3. Buy Tertiary Admission Forms\n4. Retrieve old Checker\n#. Next`;
+  `Welcome to MOVA CONSULT\nMain Menu\n1. Buy BECE Checker\n2. Buy WASSCE/NOVDEC Checker\n3. Retrieve old Checker\n#. Next`;
 const MAIN_MENU_PAGE_2 =
-  `Main Menu\n5. Link email\n6. Contact support\n7. Updates\n0. Back`;
+  `Main Menu\n4. Link email\n5. Contact support\n6. Updates\n0. Back`;
 const MAIN_MENU = MAIN_MENU_PAGE_1;
 
 const UPDATES_MSG =
   "Dial *789*444# for WASSCE news. Likely Release Date: 18 Nov2025 @ 11am . Current Step: Result Quality check. Whatsapp: 0557956020 Final Result only";
-
-type FormItem = { code: string; label: string; price: number };
-const FORMS: FormItem[] = [
-  { code: "COE", label: "COE", price: 375.0 },
-  { code: "KNUST_UNDERGRAD", label: "KNUST UNDERGRAD", price: 280.0 },
-  { code: "LEGON_UNDERGRAD", label: "LEGON UNDERGRAD", price: 240.0 },
-  { code: "UCC_UNDERGRAD", label: "UCC UNDERGRAD", price: 240.0 },
-  { code: "UEW_UNDERGRAD", label: "UEW UNDERGRAD", price: 275.0 },
-  { code: "UHAS_UNDERGRAD", label: "UHAS UNDERGRAD", price: 260.0 },
-  { code: "UPSA_UNDERGRAD", label: "UPSA UNDERGRAD", price: 275.0 },
-];
-
-const FORMS_PAGE_1 =
-  `Select form type\n1. COE - GHS 375.0\n2. KNUST UNDERGRAD - GHS 280.0\n3. LEGON UNDERGRAD - GHS 240.0\n4. UCC UNDERGRAD - GHS 240.0\nz. Next\n0. Back`;
-const FORMS_PAGE_2 =
-  `Select form type\n5. UEW UNDERGRAD - GHS 275.0\n6. UHAS UNDERGRAD - GHS 260.0\n7. UPSA UNDERGRAD - GHS 275.0\n0. Back\nb. Main Menu`;
 
 const retreivevouch = async (reference: string) => {
   const response = await fetch(
@@ -271,10 +255,6 @@ Deno.serve(async (req) => {
           return reply("Enter number of checkers to buy", true);
         }
         if (USERDATA === "3") {
-          await saveSession("FORMS_PAGE_1");
-          return reply(FORMS_PAGE_1, true);
-        }
-        if (USERDATA === "4") {
           await saveSession("RETRIEVE");
           return reply("Please enter the transaction ID that was sent to you after Momo payment", true);
         }
@@ -290,83 +270,17 @@ Deno.serve(async (req) => {
           await saveSession("MENU");
           return reply(MAIN_MENU_PAGE_1, true);
         }
-        if (USERDATA === "5") {
+        if (USERDATA === "4") {
           await saveSession("EMAIL_MENU");
           return reply("Select option to continue\n1. Link a new email\n2. View existing email", true);
         }
-        if (USERDATA === "6") {
+        if (USERDATA === "5") {
           return reply("Contact details 0557956020/0538848199", false);
         }
-        if (USERDATA === "7") {
+        if (USERDATA === "6") {
           return reply(UPDATES_MSG, false);
         }
         return reply("Invalid option.\n" + MAIN_MENU_PAGE_2, true);
-      }
-
-      case "FORMS_PAGE_1": {
-        if (USERDATA === "0") {
-          await saveSession("MENU");
-          return reply(MAIN_MENU, true);
-        }
-        if (USERDATA.toLowerCase() === "z") {
-          await saveSession("FORMS_PAGE_2");
-          return reply(FORMS_PAGE_2, true);
-        }
-        const idx = parseInt(USERDATA);
-        if ([1, 2, 3, 4].includes(idx)) {
-          const form = FORMS[idx - 1];
-          await saveSession("FORM_NAME", { formCode: form.code, formPrice: form.price });
-          return reply("Enter your full name", true);
-        }
-        return reply("Invalid option.\n" + FORMS_PAGE_1, true);
-      }
-
-      case "FORMS_PAGE_2": {
-        if (USERDATA === "0") {
-          await saveSession("FORMS_PAGE_1");
-          return reply(FORMS_PAGE_1, true);
-        }
-        if (USERDATA.toLowerCase() === "b") {
-          await saveSession("MENU");
-          return reply(MAIN_MENU, true);
-        }
-        const idx = parseInt(USERDATA);
-        if ([5, 6, 7].includes(idx)) {
-          const form = FORMS[idx - 1];
-          await saveSession("FORM_NAME", { formCode: form.code, formPrice: form.price });
-          return reply("Enter your full name", true);
-        }
-        return reply("Invalid option.\n" + FORMS_PAGE_2, true);
-      }
-
-      case "FORM_NAME": {
-        const fullName = USERDATA.trim();
-        if (fullName.length < 2 || !fullName.includes(" ")) {
-          return reply("Please enter your full name (first and last).", true);
-        }
-        const { formCode, formPrice } = session.data;
-        const total = formPrice + 0.5;
-        const reference = `MV-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
-        try {
-          await initiateCollection({
-            msisdn: MSISDN,
-            accountName: fullName,
-            amount: total,
-            reference,
-            network: NETWORK_RAW.toUpperCase(),
-            product: formCode,
-            qty: 1,
-            fullName,
-          });
-          console.log(`[${reqId}] FORM payment initiated form=${formCode} total=${total} ref=${reference} name=${fullName}`);
-        } catch (err) {
-          console.error(`[${reqId}] FORM payment error:`, err);
-          return reply("Payment could not be initiated. Please try again or contact support.", false);
-        }
-        return reply(
-          "Your request is being processed. If prompt delays dial *170#.\nContact 0557956020 if you need assistance with filling the forms.",
-          false,
-        );
       }
 
       case "WASSCE_QTY": {
@@ -374,8 +288,8 @@ Deno.serve(async (req) => {
         if (isNaN(qty) || qty < 1) {
           return reply("Invalid quantity. Please enter a valid number.", true);
         }
-        const price = qty >= 20 ? 17 : 25;
-        const total = qty * price + (0.5 * qty);
+        const price = 30;
+        const total = qty * price;
         await saveSession("WASSCE_CONFIRM", { qty, total });
         return reply(
           `You are purchasing ${qty} WASSCE result checker(s) for GHC${total.toFixed(2)}\n1. Confirm\n2. Cancel\n0. Main menu`,
@@ -422,8 +336,8 @@ Deno.serve(async (req) => {
         if (isNaN(qty) || qty < 1) {
           return reply("Invalid quantity. Please enter a valid number.", true);
         }
-        const price = qty >= 20 ? 17 : 25;
-        const total = qty * price + (0.5 * qty);
+        const price = 30;
+        const total = qty * price;
         await saveSession("BECE_CONFIRM", { qty, total });
         return reply(
           `You are purchasing ${qty} BECE result checker(s) for GHC${total.toFixed(2)}\n1. Confirm\n2. Cancel\n0. Main menu`,

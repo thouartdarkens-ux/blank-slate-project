@@ -76,10 +76,12 @@ export type Database = {
           momo_number: string | null
           password_hash: string
           phone: string | null
-          transactions_table: string
+          source_hook: string
           updated_at: string
           username: string
+          ussd: string | null
           ussd_code: string | null
+          webhook: string | null
         }
         Insert: {
           balance?: number
@@ -92,10 +94,12 @@ export type Database = {
           momo_number?: string | null
           password_hash: string
           phone?: string | null
-          transactions_table: string
+          source_hook: string
           updated_at?: string
           username: string
+          ussd?: string | null
           ussd_code?: string | null
+          webhook?: string | null
         }
         Update: {
           balance?: number
@@ -108,10 +112,12 @@ export type Database = {
           momo_number?: string | null
           password_hash?: string
           phone?: string | null
-          transactions_table?: string
+          source_hook?: string
           updated_at?: string
           username?: string
+          ussd?: string | null
           ussd_code?: string | null
+          webhook?: string | null
         }
         Relationships: []
       }
@@ -340,45 +346,30 @@ export type Database = {
         }
         Relationships: []
       }
-      nalo_endpoint_pairs: {
+      nalo_templates: {
         Row: {
           created_at: string
           description: string | null
           id: string
-          is_active: boolean
           name: string
-          network: string | null
+          template_source: string
           updated_at: string
-          ussd_function_name: string
-          ussd_function_url: string
-          webhook_function_name: string
-          webhook_function_url: string
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
-          is_active?: boolean
           name: string
-          network?: string | null
+          template_source: string
           updated_at?: string
-          ussd_function_name: string
-          ussd_function_url: string
-          webhook_function_name: string
-          webhook_function_url: string
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
-          is_active?: boolean
           name?: string
-          network?: string | null
+          template_source?: string
           updated_at?: string
-          ussd_function_name?: string
-          ussd_function_url?: string
-          webhook_function_name?: string
-          webhook_function_url?: string
         }
         Relationships: []
       }
@@ -630,6 +621,7 @@ export type Database = {
           quantity: number | null
           raw_payload: Json | null
           reference: string | null
+          source_hook: string | null
           status: string | null
           updated_at: string
         }
@@ -643,6 +635,7 @@ export type Database = {
           quantity?: number | null
           raw_payload?: Json | null
           reference?: string | null
+          source_hook?: string | null
           status?: string | null
           updated_at?: string
         }
@@ -656,90 +649,7 @@ export type Database = {
           quantity?: number | null
           raw_payload?: Json | null
           reference?: string | null
-          status?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      webhook_transactions_user_1: {
-        Row: {
-          amount: number | null
-          created_at: string
-          full_name: string | null
-          id: string
-          phone_number: string | null
-          product: string | null
-          quantity: number | null
-          raw_payload: Json | null
-          reference: string | null
-          status: string | null
-          updated_at: string
-        }
-        Insert: {
-          amount?: number | null
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          phone_number?: string | null
-          product?: string | null
-          quantity?: number | null
-          raw_payload?: Json | null
-          reference?: string | null
-          status?: string | null
-          updated_at?: string
-        }
-        Update: {
-          amount?: number | null
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          phone_number?: string | null
-          product?: string | null
-          quantity?: number | null
-          raw_payload?: Json | null
-          reference?: string | null
-          status?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      webhook_transactions_user_2: {
-        Row: {
-          amount: number | null
-          created_at: string
-          full_name: string | null
-          id: string
-          phone_number: string | null
-          product: string | null
-          quantity: number | null
-          raw_payload: Json | null
-          reference: string | null
-          status: string | null
-          updated_at: string
-        }
-        Insert: {
-          amount?: number | null
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          phone_number?: string | null
-          product?: string | null
-          quantity?: number | null
-          raw_payload?: Json | null
-          reference?: string | null
-          status?: string | null
-          updated_at?: string
-        }
-        Update: {
-          amount?: number | null
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          phone_number?: string | null
-          product?: string | null
-          quantity?: number | null
-          raw_payload?: Json | null
-          reference?: string | null
+          source_hook?: string | null
           status?: string | null
           updated_at?: string
         }

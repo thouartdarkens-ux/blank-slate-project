@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { LogOut, Wallet, TrendingUp, DollarSign, Hash, ArrowLeft, Clock, Smartphone, Pencil } from "lucide-react";
+import { LogOut, Wallet, TrendingUp, DollarSign, Hash, ArrowLeft, Clock, Smartphone, Pencil, RefreshCw } from "lucide-react";
 import BackgroundImageSlider from "@/components/BackgroundImageSlider";
 import { Link } from "react-router-dom";
 
@@ -63,6 +63,9 @@ const AffiliateDashboard = () => {
   const [momoNumber, setMomoNumber] = useState("");
   const [momoName, setMomoName] = useState("");
   const [savingMomo, setSavingMomo] = useState(false);
+  const [txSearch, setTxSearch] = useState("");
+  const [txStatus, setTxStatus] = useState<string>("all");
+  const [txProduct, setTxProduct] = useState<string>("all");
 
   const token = localStorage.getItem("affiliate_token");
 
@@ -103,6 +106,10 @@ const AffiliateDashboard = () => {
     if (!amt || amt <= 0) return toast.error("Enter a valid amount");
     if (data && amt > data.stats.availableBalance)
       return toast.error("Amount exceeds available balance");
+    if (!data?.profile?.momo_number || !data?.profile?.momo_name) {
+      toast.error("Set your Mobile Money payout details before requesting a withdrawal");
+      return;
+    }
     setSubmitting(true);
     try {
       const { data: res, error } = await supabase.functions.invoke("affiliate-withdraw", {
@@ -185,6 +192,15 @@ const AffiliateDashboard = () => {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={load}
+                disabled={loading}
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Refresh
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={logout}
                 className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
               >
@@ -210,7 +226,7 @@ const AffiliateDashboard = () => {
                 value={profile.ussd_code || "Account under review"}
                 icon={<Hash className="w-3 h-3" />}
               />
-              <ProfileItem label="Commission Rate" value={`${profile.commission_rate}%`} />
+              <ProfileItem label="Agent Code" value={profile.source_hook ? profile.source_hook.toUpperCase() : "-"} />
             </CardContent>
           </Card>
 
@@ -367,10 +383,57 @@ const AffiliateDashboard = () => {
             <CardHeader>
               <CardTitle className="text-white">Recent Transactions</CardTitle>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
-              {transactions.length === 0 ? (
-                <p className="text-sm text-gray-200">No transactions yet.</p>
-              ) : (
+            <CardContent className="overflow-x-auto space-y-3">
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  placeholder="Search reference or phone..."
+                  value={txSearch}
+                  onChange={(e) => setTxSearch(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                />
+                <select
+                  value={txStatus}
+                  onChange={(e) => setTxStatus(e.target.value)}
+                  className="rounded-md bg-white/10 border border-white/20 text-white text-sm px-3 py-2"
+                >
+                  <option value="all" className="text-black">All statuses</option>
+                  <option value="completed" className="text-black">Completed</option>
+                  <option value="pending" className="text-black">Pending</option>
+                  <option value="failed" className="text-black">Failed</option>
+                </select>
+                <select
+                  value={txProduct}
+                  onChange={(e) => setTxProduct(e.target.value)}
+                  className="rounded-md bg-white/10 border border-white/20 text-white text-sm px-3 py-2"
+                >
+                  <option value="all" className="text-black">All products</option>
+                  {Array.from(new Set(transactions.map((t) => (t.product || "").toUpperCase()).filter(Boolean))).map(
+                    (p) => (
+                      <option key={p} value={p} className="text-black">
+                        {p}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+              {(() => {
+                const q = txSearch.trim().toLowerCase();
+                const filtered = transactions.filter((t) => {
+                  const matchesQ =
+                    !q ||
+                    (t.reference || "").toLowerCase().includes(q) ||
+                    (t.phone_number || "").toLowerCase().includes(q);
+                  const matchesStatus =
+                    txStatus === "all" || (t.status || "").toLowerCase() === txStatus;
+                  const matchesProduct =
+                    txProduct === "all" || (t.product || "").toUpperCase() === txProduct;
+                  return matchesQ && matchesStatus && matchesProduct;
+                });
+                if (filtered.length === 0) {
+                  return <p className="text-sm text-gray-200">No transactions match your filters.</p>;
+                }
+                return (
                 <div className="rounded-lg overflow-hidden border border-white/10">
                   <Table>
                     <TableHeader>
@@ -385,7 +448,7 @@ const AffiliateDashboard = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {transactions.slice(0, 50).map((t) => (
+                      {filtered.slice(0, 50).map((t) => (
                         <TableRow key={t.id} className="border-white/10 hover:bg-white/5">
                           <TableCell className="text-xs text-gray-100">
                             {t.created_at ? new Date(t.created_at).toLocaleString() : "-"}
@@ -407,7 +470,8 @@ const AffiliateDashboard = () => {
                     </TableBody>
                   </Table>
                 </div>
-              )}
+                );
+              })()}
             </CardContent>
           </Card>
 
@@ -428,7 +492,6 @@ const AffiliateDashboard = () => {
                         <TableHead className="text-gray-200">Amount</TableHead>
                         <TableHead className="text-gray-200">Status</TableHead>
                         <TableHead className="text-gray-200">Notes</TableHead>
-                        <TableHead className="text-gray-200">Processed</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -442,9 +505,6 @@ const AffiliateDashboard = () => {
                             <Badge variant={statusVariant(w.status)}>{w.status}</Badge>
                           </TableCell>
                           <TableCell className="text-xs text-gray-100">{w.notes || "-"}</TableCell>
-                          <TableCell className="text-xs text-gray-100">
-                            {w.processed_at ? new Date(w.processed_at).toLocaleString() : "-"}
-                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

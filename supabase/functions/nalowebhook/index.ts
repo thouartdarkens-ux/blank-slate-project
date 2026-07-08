@@ -36,7 +36,7 @@ const sendSms = async (recipients: string[], message: string) => {
 };
 
 const recordAndNotify = async (body: any) => {
-  const SOURCE_HOOK = "nalowebhook";
+  const SOURCE_HOOK = "NALOWEBHOOK";
   const product = (body?.extra_data?.product || "").toString().toUpperCase();
   const phone = body?.extra_data?.phone_number || null;
   const quantity = Number(body?.extra_data?.quantity) || null;

@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { LogIn, Phone, ArrowLeft } from "lucide-react";
+import { LogIn, Phone, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import BackgroundImageSlider from "@/components/BackgroundImageSlider";
 import { Link } from "react-router-dom";
 
 const AffiliateLogin = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -23,15 +24,17 @@ const AffiliateLogin = () => {
       const { data, error } = await supabase.functions.invoke("affiliate-login", {
         body: { username, password },
       });
+      // Any error from the function (including non-2xx) => treat as invalid credentials
       if (error || !data?.token) {
-        throw new Error(data?.error || error?.message || "Login failed");
+        toast.error("Invalid credentials");
+        return;
       }
       localStorage.setItem("affiliate_token", data.token);
       localStorage.setItem("affiliate_profile", JSON.stringify(data.affiliate));
       toast.success("Welcome back!");
       navigate("/affiliate/dashboard");
-    } catch (err: any) {
-      toast.error(err.message || "Invalid credentials");
+    } catch {
+      toast.error("Invalid credentials");
     } finally {
       setLoading(false);
     }
@@ -67,14 +70,24 @@ const AffiliateLogin = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-gray-100">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="bg-white/95 border-white/20 text-gray-900 placeholder:text-gray-500"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="bg-white/95 border-white/20 text-gray-900 placeholder:text-gray-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-600 hover:text-gray-900"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               <Button
                 type="submit"

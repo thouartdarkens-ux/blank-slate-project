@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
     );
 
     const payload = pick(data, ALLOWED_FIELDS);
+    if (typeof payload.source_hook === "string") payload.source_hook = payload.source_hook.toUpperCase();
     if (data.password) payload.password_hash = await sha256(String(data.password));
 
     if (action === "insert") {

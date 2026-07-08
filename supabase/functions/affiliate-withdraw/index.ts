@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     }
 
     // Token prefix is the affiliate's source_hook (set at login time)
-    const sessionKey = token.split(".")[0];
+    const sessionKey = token.split(".")[0].toUpperCase();
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,

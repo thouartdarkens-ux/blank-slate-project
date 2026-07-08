@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { UserPlus, ArrowLeft } from "lucide-react";
+import { UserPlus, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import BackgroundImageSlider from "@/components/BackgroundImageSlider";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,6 +17,8 @@ const AffiliateRegister = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,7 +92,6 @@ const AffiliateRegister = () => {
                 <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} required maxLength={10}
                   placeholder="0551234567"
                   className="bg-white/95 border-white/20 text-gray-900 placeholder:text-gray-500" />
-                <p className="text-xs text-gray-300">This number will receive transaction alerts from your USSD clone.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-gray-100">Email (optional)</Label>
@@ -99,13 +100,27 @@ const AffiliateRegister = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-gray-100">Password</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
-                  className="bg-white/95 border-white/20 text-gray-900 placeholder:text-gray-500" />
+                <div className="relative">
+                  <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required
+                    className="bg-white/95 border-white/20 text-gray-900 placeholder:text-gray-500 pr-10" />
+                  <button type="button" onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-600 hover:text-gray-900">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm" className="text-gray-100">Confirm Password</Label>
-                <Input id="confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required
-                  className="bg-white/95 border-white/20 text-gray-900 placeholder:text-gray-500" />
+                <div className="relative">
+                  <Input id="confirm" type={showConfirm ? "text" : "password"} value={confirm} onChange={(e) => setConfirm(e.target.value)} required
+                    className="bg-white/95 border-white/20 text-gray-900 placeholder:text-gray-500 pr-10" />
+                  <button type="button" onClick={() => setShowConfirm((v) => !v)}
+                    aria-label={showConfirm ? "Hide password" : "Show password"}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-600 hover:text-gray-900">
+                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               <Button type="submit" size="lg" disabled={submitting}
                 className="w-full bg-green-700 hover:bg-green-800 text-white border border-green-500/50">

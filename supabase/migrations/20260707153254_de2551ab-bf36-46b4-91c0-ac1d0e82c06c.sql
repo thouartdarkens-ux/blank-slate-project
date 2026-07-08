@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.nalo_endpoint_pairs CASCADE;

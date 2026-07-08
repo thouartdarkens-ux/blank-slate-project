@@ -13,7 +13,7 @@ const supabaseAdmin = createClient(
 );
 
 // {{SOURCE_HOOK}} — substituted at clone time with this function's slug
-const SOURCE_HOOK = "{{SOURCE_HOOK}}";
+const SOURCE_HOOK = "{{SOURCE_HOOK}}".toUpperCase();
 // {{NOTIFICATION_PHONE}} — substituted at clone time with the affiliate's phone
 const NOTIFICATION_PHONE = "{{NOTIFICATION_PHONE}}";
 const ARKESEL_API_KEY = "d21HelpLTHdvaWlwVGNLV2NTRFE";
