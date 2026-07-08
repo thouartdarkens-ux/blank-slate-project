@@ -11,19 +11,16 @@ serve(async (req) => {
   }
 
   try {
-    const merchantId = Deno.env.get('XCEL_MERCHANT_ID');
-    const publicKey = Deno.env.get('XCEL_PUBLIC_KEY');
-
-    if (!merchantId || !publicKey) {
+    const PAYSTACK_SECRET_KEY = Deno.env.get('PAYSTACK_SECRET_KEY');
+    if (!PAYSTACK_SECRET_KEY) {
       return new Response(
-        JSON.stringify({ error: 'Merchant credentials not configured' }),
+        JSON.stringify({ error: 'Paystack secret key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const {
       amount,
-      product_id,
       customer_name,
       customer_email,
       customer_phone,
@@ -32,54 +29,53 @@ serve(async (req) => {
       redirect_url,
     } = await req.json();
 
-    const clientTransactionId = `CUD${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    const reference = `CUD${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    const amountInPesewas = Math.round(Number(amount) * 100);
 
     const body = {
-      amount: String(amount),
-      products: [{ product_id, amount: String(amount) }],
-      currency: "GHS",
-      channel: "WEB",
-      client_transaction_id: clientTransactionId,
-      customer_name,
-      customer_email,
-      customer_phone,
-      description: `Purchase of ${quantity} ${voucher_type} voucher(s)`,
+      email: customer_email,
+      amount: amountInPesewas,
+      currency: 'GHS',
+      reference,
+      callback_url: redirect_url,
       metadata: {
-        phone_number: customer_phone,
-        email: customer_email,
+        full_name: customer_name,
+        mobile_number: customer_phone,
+        product_type: String(voucher_type || '').toUpperCase(),
         quantity: Number(quantity),
+        amount: Number(amount),
       },
-      redirect_url,
-      webhook_url: "https://ngqlvcbkbxoqpdvmofto.supabase.co/functions/v1/xcel-webhook",
     };
 
-    console.log('Calling Xcel API with body:', JSON.stringify(body));
+    console.log('Calling Paystack initialize with body:', JSON.stringify(body));
 
-    const response = await fetch(
-      'https://api.xcelapp.com/transactions-service/paygate/generate-payment-link',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-MERCHANT-ID': merchantId,
-          'X-PUBLIC-KEY': publicKey,
-        },
-        body: JSON.stringify(body),
-      }
-    );
+    const response = await fetch('https://api.paystack.co/transaction/initialize', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
 
     const responseData = await response.json();
-    console.log('Xcel API response:', JSON.stringify(responseData));
+    console.log('Paystack response:', JSON.stringify(responseData));
 
-    if (!response.ok) {
+    if (!response.ok || !responseData?.status) {
       return new Response(
         JSON.stringify({ error: 'Payment link generation failed', details: responseData }),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: response.status || 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     return new Response(
-      JSON.stringify(responseData),
+      JSON.stringify({
+        data: {
+          payment_link: responseData.data.authorization_url,
+          reference: responseData.data.reference,
+          access_code: responseData.data.access_code,
+        },
+      }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
