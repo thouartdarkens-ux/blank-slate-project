@@ -34,7 +34,16 @@ Deno.serve(async (req) => {
       .eq("username", username)
       .maybeSingle();
 
-    if (error || !affiliate) {
+    // Network/connection errors should be distinguishable from bad credentials
+    // so the frontend can show "Failed to login, retry" vs "Invalid credentials".
+    if (error) {
+      return new Response(
+        JSON.stringify({ error: "Network error", code: "NETWORK_ERROR" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (!affiliate) {
       return new Response(JSON.stringify({ error: "Invalid credentials" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -59,9 +68,11 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // Unexpected errors (network, timeout, etc.) — return NETWORK_ERROR so
+    // the frontend can show "Failed to login, retry" instead of "Invalid credentials".
+    return new Response(
+      JSON.stringify({ error: "Network error", code: "NETWORK_ERROR" }),
+      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 });
