@@ -7,28 +7,26 @@ import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { decryptCheckoutData } from '@/utils/encryption';
-import { supabase } from '@/integrations/supabase/client';
 
 interface CheckoutState {
   type: string;
   quantity: number;
   amount: number;
   timestamp: number;
-  isTertiary?: boolean;
 }
 
 interface PaymentFormData {
   email: string;
   mobileNumber: string;
-  fullName?: string;
 }
 
-const getProductId = (type: string): string => {
-  const t = type.toLowerCase();
-  if (t.includes('bece')) return 'OuwclNa2V';
-  if (t.includes('wassce')) return 'DN0X1U1JL';
-  return 'DN0X1U1JL';
-};
+declare global {
+  interface Window {
+    PaystackPop?: any;
+  }
+}
+
+const PAYSTACK_PUBLIC_KEY = 'pk_live_fe932e135485cd49334f351f9d7e910448bd88d2';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -75,41 +73,58 @@ const Checkout = () => {
     }
   }, [location.search, navigate]);
 
-  const onSubmit = async (data: PaymentFormData) => {
+  const onSubmit = (data: PaymentFormData) => {
     if (!checkoutDetails) return;
+    if (!window.PaystackPop) {
+      toast.error('Payment library not loaded. Please refresh and try again.');
+      return;
+    }
+
     setIsProcessing(true);
 
-    try {
-      const redirectUrl = checkoutDetails.isTertiary
-        ? `${window.location.origin}/`
-        : `${window.location.origin}/payment-success`;
+    const handler = window.PaystackPop.setup({
+      key: PAYSTACK_PUBLIC_KEY,
+      email: data.email,
+      amount: Math.round(checkoutDetails.amount * 100),
+      currency: 'GHS',
+      metadata: {
+        product_type: checkoutDetails.type,
+        quantity: checkoutDetails.quantity,
+        amount: checkoutDetails.amount,
+        mobile_number: data.mobileNumber,
+        timestamp: checkoutDetails.timestamp,
+        custom_fields: [
+          {
+            display_name: 'Product',
+            variable_name: 'product_type',
+            value: checkoutDetails.type,
+          },
+          {
+            display_name: 'Quantity',
+            variable_name: 'quantity',
+            value: String(checkoutDetails.quantity),
+          },
+          {
+            display_name: 'Mobile Number',
+            variable_name: 'mobile_number',
+            value: data.mobileNumber,
+          },
+        ],
+      },
+      onClose: () => {
+        setIsProcessing(false);
+        toast.info('Payment window closed');
+      },
+      callback: (response: any) => {
+        setIsProcessing(false);
+        if (response?.reference) {
+          localStorage.setItem('paymentReference', response.reference);
+        }
+        window.location.href = `${window.location.origin}/payment-success`;
+      },
+    });
 
-      const { data: res, error } = await supabase.functions.invoke('generate-payment-link', {
-        body: {
-          amount: checkoutDetails.amount,
-          product_id: getProductId(checkoutDetails.type),
-          customer_name: data.fullName || data.email,
-          customer_email: data.email,
-          customer_phone: data.mobileNumber,
-          quantity: checkoutDetails.quantity,
-          voucher_type: checkoutDetails.type,
-          redirect_url: redirectUrl,
-        },
-      });
-
-      if (error) throw new Error(error.message);
-
-      const paymentLink = res?.data?.payment_link || res?.payment_link;
-      if (!paymentLink) {
-        throw new Error('No payment link returned');
-      }
-
-      window.location.href = paymentLink;
-    } catch (err) {
-      setIsProcessing(false);
-      console.error('Payment link error:', err);
-      toast.error(err instanceof Error ? err.message : 'Failed to start payment');
-    }
+    handler.openIframe();
   };
 
   if (!checkoutDetails) {
@@ -152,25 +167,6 @@ const Checkout = () => {
               </div>
             </div>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {checkoutDetails.isTertiary && (
-                <>
-                  <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-900">
-                    Contact 0557956020 if you need assistance with filling the forms
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      {...register('fullName', { required: 'Full name is required' })}
-                      placeholder="Enter your full name"
-                    />
-                    {errors.fullName && (
-                      <p className="text-sm text-red-500">{errors.fullName.message}</p>
-                    )}
-                  </div>
-                </>
-              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -197,7 +193,7 @@ const Checkout = () => {
               </div>
 
               <Button type="submit" className="w-full" size="lg" disabled={isProcessing}>
-                {isProcessing ? 'Processing...' : 'Proceed to Payment'}
+                {isProcessing ? 'Processing...' : 'Pay with Paystack'}
               </Button>
 
               <Button

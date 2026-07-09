@@ -298,12 +298,25 @@ Deno.serve(async (req) => {
       }
 
       case "WASSCE_AGENT": {
+        if (USERDATA === "0") {
+          await saveSession("MENU");
+          return reply(MAIN_MENU, true);
+        }
         const agentCode = USERDATA.trim();
         if (!agentCode) {
-          return reply("Invalid agent code. Please enter a valid agent code.", true);
+          return reply("Invalid agent code. Please enter a valid agent code.\n0. Main menu", true);
+        }
+        const paddedCode = agentCode.replace(/[^0-9]/g, "").padStart(3, "0");
+        const { data: aff } = await supabase
+          .from("affiliates")
+          .select("id")
+          .eq("source_hook", paddedCode)
+          .maybeSingle();
+        if (!aff) {
+          return reply("Agent code not found. Please enter a valid agent code.\n0. Main menu", true);
         }
         const { qty, total } = session.data;
-        await saveSession("WASSCE_CONFIRM", { qty, total, agentCode });
+        await saveSession("WASSCE_CONFIRM", { qty, total, agentCode: paddedCode });
         return reply(
           `You are purchasing ${qty} WASSCE result checker(s) for GHC${total.toFixed(2)}\n1. Confirm\n2. Cancel\n0. Main menu`,
           true,
@@ -357,12 +370,25 @@ Deno.serve(async (req) => {
       }
 
       case "BECE_AGENT": {
+        if (USERDATA === "0") {
+          await saveSession("MENU");
+          return reply(MAIN_MENU, true);
+        }
         const agentCode = USERDATA.trim();
         if (!agentCode) {
-          return reply("Invalid agent code. Please enter a valid agent code.", true);
+          return reply("Invalid agent code. Please enter a valid agent code.\n0. Main menu", true);
+        }
+        const paddedCode = agentCode.replace(/[^0-9]/g, "").padStart(3, "0");
+        const { data: aff } = await supabase
+          .from("affiliates")
+          .select("id")
+          .eq("source_hook", paddedCode)
+          .maybeSingle();
+        if (!aff) {
+          return reply("Agent code not found. Please enter a valid agent code.\n0. Main menu", true);
         }
         const { qty, total } = session.data;
-        await saveSession("BECE_CONFIRM", { qty, total, agentCode });
+        await saveSession("BECE_CONFIRM", { qty, total, agentCode: paddedCode });
         return reply(
           `You are purchasing ${qty} BECE result checker(s) for GHC${total.toFixed(2)}\n1. Confirm\n2. Cancel\n0. Main menu`,
           true,

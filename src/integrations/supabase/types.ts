@@ -74,6 +74,7 @@ export type Database = {
           id: string
           lifetime_commissions: number
           momo_name: string | null
+          momo_network: string | null
           momo_number: string | null
           password_hash: string
           phone: string | null
@@ -95,6 +96,7 @@ export type Database = {
           id?: string
           lifetime_commissions?: number
           momo_name?: string | null
+          momo_network?: string | null
           momo_number?: string | null
           password_hash: string
           phone?: string | null
@@ -116,6 +118,7 @@ export type Database = {
           id?: string
           lifetime_commissions?: number
           momo_name?: string | null
+          momo_network?: string | null
           momo_number?: string | null
           password_hash?: string
           phone?: string | null

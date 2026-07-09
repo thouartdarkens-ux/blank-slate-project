@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { token, momo_number, momo_name } = await req.json();
+    const { token, momo_number, momo_name, momo_network } = await req.json();
     if (!token) {
       return new Response(JSON.stringify({ error: "token required" }), {
         status: 400,
@@ -28,6 +28,14 @@ Deno.serve(async (req) => {
     }
     if (name.length < 2) {
       return new Response(JSON.stringify({ error: "Enter the Momo account name" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const network = String(momo_network || "").trim().toUpperCase();
+    const validNetworks = ["MTN", "TELECEL", "AT"];
+    if (!validNetworks.includes(network)) {
+      return new Response(JSON.stringify({ error: "Select a valid network (MTN, TELECEL, or AT)" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -57,6 +65,7 @@ Deno.serve(async (req) => {
       .update({
         momo_number: number,
         momo_name: name,
+        momo_network: network,
         updated_at: new Date().toISOString(),
       })
       .eq("id", affiliate.id);
@@ -64,7 +73,7 @@ Deno.serve(async (req) => {
     if (updErr) throw updErr;
 
     return new Response(
-      JSON.stringify({ success: true, momo_number: number, momo_name: name }),
+      JSON.stringify({ success: true, momo_number: number, momo_name: name, momo_network: network }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {

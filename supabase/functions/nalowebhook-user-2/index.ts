@@ -163,7 +163,6 @@ console.log("transuction completed callin voucher endpoint")
 
 const qty = Number(body?.extra_data?.quantity) || 0;
 const rawAmount = Number(body?.extra_data?.amount) || 0;
-const voucherAmount = +(rawAmount - 5 * qty).toFixed(2);
 
 const payload = {
   
@@ -171,7 +170,7 @@ const payload = {
     phone_number:body?.extra_data?.phone_number,
     product:body?.extra_data?.product.toUpperCase(),
     quantity: qty,
-    amount: voucherAmount,
+    amount: rawAmount,
     email: ``,
     
   };

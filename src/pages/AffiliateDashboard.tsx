@@ -27,6 +27,13 @@ import { toast } from "sonner";
 import { LogOut, Wallet, TrendingUp, DollarSign, Hash, ArrowLeft, Clock, Smartphone, Pencil, RefreshCw } from "lucide-react";
 import BackgroundImageSlider from "@/components/BackgroundImageSlider";
 import { Link } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type DashboardData = {
   profile: any;
@@ -62,6 +69,7 @@ const AffiliateDashboard = () => {
   const [momoOpen, setMomoOpen] = useState(false);
   const [momoNumber, setMomoNumber] = useState("");
   const [momoName, setMomoName] = useState("");
+  const [momoNetwork, setMomoNetwork] = useState("");
   const [savingMomo, setSavingMomo] = useState(false);
   const [txSearch, setTxSearch] = useState("");
   const [txStatus, setTxStatus] = useState<string>("all");
@@ -131,6 +139,7 @@ const AffiliateDashboard = () => {
   const openMomoEditor = () => {
     setMomoNumber(data?.profile?.momo_number || "");
     setMomoName(data?.profile?.momo_name || "");
+    setMomoNetwork(data?.profile?.momo_network || "");
     setMomoOpen(true);
   };
 
@@ -138,10 +147,11 @@ const AffiliateDashboard = () => {
     if (!/^0\d{9}$/.test(momoNumber.trim()))
       return toast.error("Enter a valid 10-digit Momo number starting with 0");
     if (momoName.trim().length < 2) return toast.error("Enter the Momo account name");
+    if (!momoNetwork) return toast.error("Select a mobile money network");
     setSavingMomo(true);
     try {
       const { data: res, error } = await supabase.functions.invoke("affiliate-update-momo", {
-        body: { token, momo_number: momoNumber.trim(), momo_name: momoName.trim() },
+        body: { token, momo_number: momoNumber.trim(), momo_name: momoName.trim(), momo_network: momoNetwork },
       });
       if (error || res?.error) throw new Error(res?.error || error?.message);
       toast.success("Momo details saved");
@@ -245,9 +255,10 @@ const AffiliateDashboard = () => {
                 {profile.momo_number ? "Edit" : "Set Details"}
               </Button>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <ProfileItem label="Momo Number" value={profile.momo_number || "Not set"} />
               <ProfileItem label="Momo Name" value={profile.momo_name || "Not set"} />
+              <ProfileItem label="Network" value={profile.momo_network || "Not set"} />
             </CardContent>
           </Card>
 
@@ -279,6 +290,19 @@ const AffiliateDashboard = () => {
                     value={momoName}
                     onChange={(e) => setMomoName(e.target.value)}
                   />
+                </div>
+                <div>
+                  <Label>Network</Label>
+                  <Select value={momoNetwork} onValueChange={setMomoNetwork}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select network" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MTN">MTN</SelectItem>
+                      <SelectItem value="TELECEL">TELECEL</SelectItem>
+                      <SelectItem value="AT">AT</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <DialogFooter>

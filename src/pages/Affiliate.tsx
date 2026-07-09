@@ -45,9 +45,9 @@ const Affiliate = () => {
         <section className="px-4 pb-8">
           <div className="max-w-4xl mx-auto grid grid-cols-3 gap-4">
             {[
-              { value: "17%", label: "Max Commission" },
               { value: "24/7", label: "Live Tracking" },
               { value: "0", label: "Signup Fee" },
+              { value: "Fast", label: "Payouts" },
             ].map((s) => (
               <div
                 key={s.label}
@@ -78,7 +78,7 @@ const Affiliate = () => {
                 {
                   icon: DollarSign,
                   title: "Competitive Commission",
-                  items: ["Up to 17% commission per sale", "Instant commission tracking", "Quick payouts"],
+                  items: ["Commission on every sale", "Instant commission tracking", "Quick payouts"],
                 },
                 {
                   icon: Share2,

@@ -288,7 +288,7 @@ Deno.serve(async (req) => {
         if (isNaN(qty) || qty < 1) {
           return reply("Invalid quantity. Please enter a valid number.", true);
         }
-        const price = 30;
+        const price = 25;
         const total = qty * price;
         await saveSession("WASSCE_CONFIRM", { qty, total });
         return reply(
@@ -336,7 +336,7 @@ Deno.serve(async (req) => {
         if (isNaN(qty) || qty < 1) {
           return reply("Invalid quantity. Please enter a valid number.", true);
         }
-        const price = 30;
+        const price = 25;
         const total = qty * price;
         await saveSession("BECE_CONFIRM", { qty, total });
         return reply(

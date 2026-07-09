@@ -1,0 +1,2 @@
+
+ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS momo_network TEXT DEFAULT '';
