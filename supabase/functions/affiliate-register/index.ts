@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
         email: email || null,
         phone: cleanPhone,
         ussd_code: ussd_code || "*920*665#",
-        commission_rate: commission_rate ?? 17,
+        commission_rate: commission_rate ?? 16.7,
         source_hook: sourceHook,
         balance: 0,
         ussd: "",

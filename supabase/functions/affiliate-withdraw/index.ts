@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
     const { data: affiliate, error: affErr } = await supabase
       .from("affiliates")
-      .select("id, commission_rate, source_hook, balance, momo_number, momo_name")
+      .select("id, commission_rate, source_hook, balance, momo_number, momo_name, momo_network")
       .eq("source_hook", sessionKey)
       .maybeSingle();
 
@@ -114,11 +114,76 @@ Deno.serve(async (req) => {
       throw updErr;
     }
 
+    // --- Attempt Moolre payout if affiliate has momo details ---
+    let payoutResult: any = null;
+    let payoutError: string | null = null;
+    let payoutRef: string | null = null;
+
+    if (affiliate.momo_number && affiliate.momo_network) {
+      try {
+        const payoutRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/moolre-payout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+          },
+          body: JSON.stringify({
+            action: "process_payout",
+            withdrawal_id: withdrawal.id,
+            affiliate_id: affiliate.id,
+            amount: amt,
+            recipient_number: affiliate.momo_number,
+            recipient_name: affiliate.momo_name || "",
+            network: affiliate.momo_network,
+          }),
+        });
+        payoutResult = await payoutRes.json();
+
+        if (payoutRes.ok && payoutResult.success) {
+          payoutRef = payoutResult.external_ref || null;
+          // Mark withdrawal as paid
+          await supabase
+            .from("affiliate_withdrawals")
+            .update({
+              status: "paid",
+              payout_reference: payoutRef,
+              processed_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", withdrawal.id);
+        } else {
+          payoutError = payoutResult.error || "Payout failed";
+          // Record the error on the withdrawal, keep as pending
+          await supabase
+            .from("affiliate_withdrawals")
+            .update({
+              payout_error: payoutError,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", withdrawal.id);
+        }
+      } catch (e) {
+        payoutError = (e as Error).message;
+        await supabase
+          .from("affiliate_withdrawals")
+          .update({
+            payout_error: payoutError,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", withdrawal.id);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         withdrawal,
         newBalance,
-        message: "Withdrawal request submitted. Balance reserved.",
+        payout: payoutResult?.success
+          ? { success: true, external_ref: payoutRef, recipient_name: payoutResult.recipient_name }
+          : { success: false, error: payoutError || "No momo details — withdrawal pending manual processing" },
+        message: payoutResult?.success
+          ? "Withdrawal paid out successfully via Moolre."
+          : "Withdrawal request submitted. Balance reserved. Payout will be processed manually.",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
