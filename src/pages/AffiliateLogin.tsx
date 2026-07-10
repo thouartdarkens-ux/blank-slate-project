@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { LogIn, Phone, ArrowLeft, Eye, EyeOff, KeyRound } from "lucide-react";
+import { LogIn, ArrowLeft, Eye, EyeOff, KeyRound } from "lucide-react";
 import BackgroundImageSlider from "@/components/BackgroundImageSlider";
 import { Link } from "react-router-dom";
 
@@ -155,10 +155,6 @@ const AffiliateLogin = () => {
               >
                 {loading ? "Signing in..." : "Sign In"}
               </Button>
-              <div className="flex items-start gap-2 rounded-lg bg-green-900/40 border border-green-500/30 p-3 text-sm text-gray-100">
-                <Phone className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-400" />
-                <span>Contact 0557956020 to request an affiliate account.</span>
-              </div>
               <div className="text-center text-sm text-gray-200">
                 Don't have an account?{" "}
                 <Link to="/affiliate/register" className="text-green-400 hover:text-green-300 underline">
