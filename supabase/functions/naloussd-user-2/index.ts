@@ -19,7 +19,7 @@ const MAIN_MENU_PAGE_2 =
 const MAIN_MENU = MAIN_MENU_PAGE_1;
 
 const UPDATES_MSG =
-  "Dial *789*444# for WASSCE news. Likely Release Date: 18 Nov2025 @ 11am . Current Step: Result Quality check. Whatsapp: 0557956020 Final Result only";
+  "Dial *920*138# for BECE news. Likely Release Date: 15 July 2026. Current Step: Result Quality check. WhatsApp: 0241840979 (Final Result only).";
 
 const retreivevouch = async (reference: string) => {
   const response = await fetch(
@@ -248,11 +248,11 @@ Deno.serve(async (req) => {
       case "MENU": {
         if (USERDATA === "1") {
           await saveSession("BECE_QTY");
-          return reply("Enter number of checkers to buy", true);
+          return reply("Enter Quantity of checkers to buy", true);
         }
         if (USERDATA === "2") {
           await saveSession("WASSCE_QTY");
-          return reply("Enter number of checkers to buy", true);
+          return reply("Enter Quantity of checkers to buy", true);
         }
         if (USERDATA === "3") {
           await saveSession("RETRIEVE");
@@ -275,7 +275,7 @@ Deno.serve(async (req) => {
           return reply("Select option to continue\n1. Link a new email\n2. View existing email", true);
         }
         if (USERDATA === "5") {
-          return reply("Contact details 0557956020/0538848199", false);
+          return reply("Contact details 0241840979/0538848199", false);
         }
         if (USERDATA === "6") {
           return reply(UPDATES_MSG, false);

@@ -2,25 +2,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, PATCH, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
-
-const ALLOWED_FIELDS = [
-  "affiliate_id",
-  "amount",
-  "status",
-  "notes",
-  "momo_number",
-  "momo_name",
-  "processed_at",
-];
-
-function pick(obj: Record<string, any>, fields: string[]) {
-  const out: Record<string, any> = {};
-  for (const f of fields) if (obj[f] !== undefined) out[f] = obj[f];
-  return out;
-}
 
 function json(body: any, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -86,39 +70,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ── PATCH: update a withdrawal ──────────────────────────────
-    if (req.method === "PATCH") {
-      const body = await req.json();
-      const { id, ...rest } = body;
-
-      if (!id) return json({ error: "id is required" }, 400);
-
-      const payload = pick(rest, ALLOWED_FIELDS);
-      if (Object.keys(payload).length === 0) {
-        return json({ error: "No valid fields to update" }, 400);
-      }
-
-      // Auto-stamp processed_at when status moves away from pending
-      if (payload.status && payload.status !== "pending" && !payload.processed_at) {
-        payload.processed_at = new Date().toISOString();
-      }
-
-      const { data, error } = await supabase
-        .from("affiliate_withdrawals")
-        .update(payload)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) {
-        if (error.code === "PGRP1161") return json({ error: "Withdrawal not found" }, 404);
-        throw error;
-      }
-
-      return json({ withdrawal: data });
-    }
-
-    return json({ error: "Method not allowed. Use GET or PATCH." }, 405);
+    return json({ error: "Method not allowed. Use GET." }, 405);
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }

@@ -50,11 +50,10 @@ const recordAndNotify = async (body: any) => {
   if (reference && status) {
     try {
       const { data: existing, error: exErr } = await supabaseAdmin
-        .from("webhook_transactions")
+        .from("nalowebhook_transactions")
         .select("id")
         .eq("reference", reference)
         .eq("status", status)
-        .eq("source_hook", SOURCE_HOOK)
         .limit(1)
         .maybeSingle();
       if (exErr) console.error("[nalowebhook] dedup check error:", exErr);
@@ -70,7 +69,7 @@ const recordAndNotify = async (body: any) => {
   }
 
   try {
-    const { error } = await supabaseAdmin.from("webhook_transactions").insert({
+    const { error } = await supabaseAdmin.from("nalowebhook_transactions").insert({
       reference,
       phone_number: phone,
       product,
@@ -92,11 +91,10 @@ const recordAndNotify = async (body: any) => {
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
       const { data, error } = await supabaseAdmin
-        .from("webhook_transactions")
+        .from("nalowebhook_transactions")
         .select("amount")
         .eq("status", "COMPLETED")
         .eq("product", product)
-        .eq("source_hook", SOURCE_HOOK)
         .gte("created_at", startOfDay.toISOString());
       if (error) console.error("[nalowebhook] daily total error:", error);
       const dailyTotal = (data || []).reduce(
@@ -164,7 +162,7 @@ const payload = {
   };
 
  const response = await fetch(
-    `https://iyagntncuhajyktsqtmm.supabase.co/functions/v1/buy-voucher-api`,
+    `https://iyagntncuhajyktsqtmm.supabase.co/functions/v1/buy-voucher-api-nalo`,
     {
       method: "POST",
       headers: {

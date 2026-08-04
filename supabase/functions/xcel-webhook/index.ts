@@ -168,7 +168,7 @@ serve(async (req) => {
       metadata
     }, null, 2));
 
-    const response = await fetch('https://iyagntncuhajyktsqtmm.supabase.co/functions/v1/buy-voucher-api', {
+    const response = await fetch('https://iyagntncuhajyktsqtmm.supabase.co/functions/v1/buy-voucher-api-mnotify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

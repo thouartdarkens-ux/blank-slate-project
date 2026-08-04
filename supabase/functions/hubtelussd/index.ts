@@ -5,11 +5,33 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function nalo(userid: string, msisdn: string, msg: string, keepOpen: boolean) {
-  return new Response(
-    JSON.stringify({ USERID: userid, MSISDN: msisdn, MSG: msg, MSGTYPE: keepOpen }),
-    { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-  );
+type HubtelType = "response" | "release" | "AddToCart";
+
+function hubtel(
+  sessionId: string,
+  type: HubtelType,
+  message: string,
+  opts: {
+    label?: string;
+    dataType?: "display" | "input";
+    fieldType?: string;
+    clientState?: string;
+    item?: { ItemName: string; Qty: number; Price: number };
+  } = {},
+) {
+  const payload: Record<string, unknown> = {
+    SessionId: sessionId,
+    Type: type,
+    Message: message,
+    Label: opts.label ?? message.split("\n")[0],
+    DataType: opts.dataType ?? (type === "response" ? "input" : "display"),
+    FieldType: opts.fieldType ?? "text",
+  };
+  if (opts.clientState) payload.ClientState = opts.clientState;
+  if (opts.item) payload.Item = opts.item;
+  return new Response(JSON.stringify(payload), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
 const MAIN_MENU_PAGE_1 =
@@ -33,7 +55,7 @@ const retreivevouch = async (reference: string) => {
     },
   );
   const data = await response.json();
-  console.log(data);
+  console.log("[hubtelussd] retrieve voucher:", data);
 };
 
 const linkemail = async (Phone_number: string, email: string) => {
@@ -49,7 +71,7 @@ const linkemail = async (Phone_number: string, email: string) => {
     },
   );
   const data = await response.json();
-  console.log(data);
+  console.log("[hubtelussd] link email:", data);
 };
 
 const retreive = async (phone_number: string) => {
@@ -64,112 +86,9 @@ const retreive = async (phone_number: string) => {
     },
   );
   const data = await response.json();
-  console.log(data);
+  console.log("[hubtelussd] retrieve email:", data);
   return data;
 };
-
-async function hmacSha256Hex(key: string, message: string) {
-  const enc = new TextEncoder();
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(key),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(message));
-  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function initiateCollection({
-  msisdn,
-  accountName,
-  amount,
-  reference,
-  network,
-  product,
-  qty,
-  fullName,
-  agentCode,
-}: {
-  msisdn: string;
-  accountName: string;
-  amount: number;
-  reference: string;
-  network: string;
-  product: string;
-  qty: number;
-  fullName?: string;
-  agentCode?: string;
-}) {
-  const merchantId = Deno.env.get("COLLECTION_MERCHANT_ID")!;
-  const secret = Deno.env.get("COLLECTION_MERCHANT_SECRET")!;
-  const baseUrl = Deno.env.get("COLLECTION_BASE_URL")!;
-  const callback = `${Deno.env.get("SUPABASE_URL")}/functions/v1/nalowebhook-general`;
-  const basicToken = Deno.env.get("COLLECTION_BASIC_TOKEN")!;
-
-  const baseUrlClean = baseUrl.replace(/\/+$/, "");
-
-  // Step 1: generate payment token
-  const tokenUrl = `${baseUrlClean}/clientapi/generate-payment-token/`;
-  const tokenBody = { merchant_id: merchantId };
-  console.log("[collection] token request:", { url: tokenUrl, body: tokenBody, authPrefix: `Basic ${basicToken.slice(0, 12)}...` });
-  const tokenRes = await fetch(tokenUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Basic ${basicToken}`,
-    },
-    body: JSON.stringify(tokenBody),
-  });
-  const tokenText = await tokenRes.text();
-  console.log("[collection] token response:", { status: tokenRes.status, body: tokenText });
-  let tokenJson: any = {};
-  try { tokenJson = JSON.parse(tokenText); } catch { /* keep empty */ }
-  const paymentToken = tokenJson?.data?.token;
-  if (!paymentToken) {
-    throw new Error(`Failed to generate payment token: ${tokenText}`);
-  }
-
-  const amountStr = amount.toFixed(2);
-  const message = `${merchantId}${msisdn}${amountStr}${reference}`;
-  const trans_hash = await hmacSha256Hex(secret, message);
-
-  const extra_data: Record<string, any> = { product, amount, quantity: qty, phone_number: msisdn };
-  if (fullName) extra_data.full_name = fullName;
-  if (agentCode) extra_data.agent_code = agentCode;
-
-  const body = {
-    merchant_id: merchantId,
-    service_name: "MOMO_TRANSACTION",
-    trans_hash,
-    account_number: msisdn,
-    account_name: accountName || "USSD Customer",
-    description: `${product.toUpperCase()} x${qty}`,
-    reference,
-    callback,
-    network,
-    amount,
-    extra_data,
-  };
-
-
-  const url = `${baseUrlClean}/clientapi/collection/`;
-  console.log("[collection] collection request:", { url, body, tokenPrefix: paymentToken.slice(0, 24) + "..." });
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "token": paymentToken,
-    },
-    body: JSON.stringify(body),
-  });
-  const respText = await response.text();
-  console.log("[collection] collection response:", { status: response.status, body: respText });
-  let data: any = {};
-  try { data = JSON.parse(respText); } catch { /* keep empty */ }
-  return data;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -177,26 +96,34 @@ Deno.serve(async (req) => {
   }
 
   const reqId = crypto.randomUUID().slice(0, 8);
+  let SESSIONID = "";
 
   try {
     const rawBody = await req.text();
     if (!rawBody) {
-      return nalo("", "", "Empty request body.", false);
+      return hubtel("", "release", "Empty request body.");
     }
     const body = JSON.parse(rawBody);
-    const USERID: string = body.USERID ?? "";
-    const MSISDN: string = body.MSISDN ?? "";
-    const USERDATA: string = (body.USERDATA ?? "").toString().trim();
-    const MSGTYPE: boolean = body.MSGTYPE === true || body.MSGTYPE === "true";
-    const NETWORK_RAW: string = (body.NETWORK ?? "").toString();
-    const SESSIONID: string = body.SESSIONID ?? "";
+
+    const TYPE: string = (body.Type ?? "").toString();
+    const MSISDN: string = (body.Mobile ?? "").toString();
+    const USERDATA: string = (body.Message ?? "").toString().trim();
+    const SERVICE_CODE: string = (body.ServiceCode ?? "").toString();
+    const NETWORK_RAW: string = (body.Operator ?? "").toString();
+    const CLIENT_STATE: string = (body.ClientState ?? "").toString();
+    SESSIONID = (body.SessionId ?? "").toString();
+    const isFirst = TYPE.toLowerCase() === "initiation";
 
     console.log(
-      `[${reqId}] sid=${SESSIONID} first=${MSGTYPE} msisdn=${MSISDN} network=${NETWORK_RAW} userdata="${USERDATA}"`,
+      `[${reqId}] sid=${SESSIONID} type=${TYPE} msisdn=${MSISDN} operator=${NETWORK_RAW} clientState=${CLIENT_STATE} message="${USERDATA}"`,
     );
 
     if (!SESSIONID) {
-      return nalo(USERID, MSISDN, "Missing SESSIONID.", false);
+      return hubtel("", "release", "Missing SessionId.");
+    }
+
+    if (TYPE.toLowerCase() === "timeout") {
+      return hubtel(SESSIONID, "release", "Session cancelled.");
     }
 
     const supabase = createClient(
@@ -218,7 +145,7 @@ Deno.serve(async (req) => {
     async function saveSession(stage: string, data: Record<string, any> = {}) {
       await supabase.from("nalo_ussd_sessions").upsert({
         session_id: SESSIONID,
-        userid: USERID,
+        userid: SERVICE_CODE,
         msisdn: MSISDN,
         network: NETWORK_RAW,
         stage,
@@ -230,18 +157,27 @@ Deno.serve(async (req) => {
       await supabase.from("nalo_ussd_sessions").delete().eq("session_id", SESSIONID);
     }
 
-    function reply(msg: string, keepOpen: boolean) {
+    // keepOpen -> "response", otherwise "release"
+    function reply(msg: string, keepOpen: boolean, stage?: string) {
       if (!keepOpen) {
-        // fire-and-forget cleanup
         endSession().catch((e) => console.error(`[${reqId}] cleanup error:`, e));
       }
-      return nalo(USERID, MSISDN, msg, keepOpen);
+      return hubtel(SESSIONID, keepOpen ? "response" : "release", msg, {
+        dataType: keepOpen ? "input" : "display",
+        clientState: stage,
+      });
     }
 
-    // First-time request → show main menu
-    if (MSGTYPE) {
+    function cart(msg: string, itemName: string, qty: number, price: number) {
+      return hubtel(SESSIONID, "AddToCart", msg, {
+        dataType: "display",
+        item: { ItemName: itemName, Qty: qty, Price: price },
+      });
+    }
+
+    if (isFirst) {
       await saveSession("MENU");
-      return reply(MAIN_MENU, true);
+      return reply(MAIN_MENU, true, "MENU");
     }
 
     const session = await getSession();
@@ -251,31 +187,31 @@ Deno.serve(async (req) => {
       case "MENU": {
         if (USERDATA === "1") {
           await saveSession("BECE_QTY");
-          return reply("Enter number of checkers to buy", true);
+          return reply("Enter number of checkers to buy", true, "BECE_QTY");
         }
         if (USERDATA === "2") {
           await saveSession("WASSCE_QTY");
-          return reply("Enter number of checkers to buy", true);
+          return reply("Enter number of checkers to buy", true, "WASSCE_QTY");
         }
         if (USERDATA === "3") {
           await saveSession("RETRIEVE");
-          return reply("Please enter the transaction ID that was sent to you after Momo payment", true);
+          return reply("Please enter the transaction ID that was sent to you after Momo payment", true, "RETRIEVE");
         }
         if (USERDATA === "#") {
           await saveSession("MENU_PAGE_2");
-          return reply(MAIN_MENU_PAGE_2, true);
+          return reply(MAIN_MENU_PAGE_2, true, "MENU_PAGE_2");
         }
-        return reply("Invalid option.\n" + MAIN_MENU_PAGE_1, true);
+        return reply("Invalid option.\n" + MAIN_MENU_PAGE_1, true, "MENU");
       }
 
       case "MENU_PAGE_2": {
         if (USERDATA === "0") {
           await saveSession("MENU");
-          return reply(MAIN_MENU_PAGE_1, true);
+          return reply(MAIN_MENU_PAGE_1, true, "MENU");
         }
         if (USERDATA === "4") {
           await saveSession("EMAIL_MENU");
-          return reply("Select option to continue\n1. Link a new email\n2. View existing email", true);
+          return reply("Select option to continue\n1. Link a new email\n2. View existing email", true, "EMAIL_MENU");
         }
         if (USERDATA === "5") {
           return reply("Contact details 0241840979/0538848199", false);
@@ -283,28 +219,28 @@ Deno.serve(async (req) => {
         if (USERDATA === "6") {
           return reply(UPDATES_MSG, false);
         }
-        return reply("Invalid option.\n" + MAIN_MENU_PAGE_2, true);
+        return reply("Invalid option.\n" + MAIN_MENU_PAGE_2, true, "MENU_PAGE_2");
       }
 
       case "WASSCE_QTY": {
         const qty = parseInt(USERDATA);
         if (isNaN(qty) || qty < 1) {
-          return reply("Invalid quantity. Please enter a valid number.", true);
+          return reply("Invalid quantity. Please enter a valid number.", true, "WASSCE_QTY");
         }
         const price = qty >= 20 ? 17 : 30;
         const total = qty * price;
         await saveSession("WASSCE_AGENT", { qty, total });
-        return reply("Enter Agent code", true);
+        return reply("Enter Agent code", true, "WASSCE_AGENT");
       }
 
       case "WASSCE_AGENT": {
         if (USERDATA === "0") {
           await saveSession("MENU");
-          return reply(MAIN_MENU, true);
+          return reply(MAIN_MENU, true, "MENU");
         }
         const agentCode = USERDATA.trim();
         if (!agentCode) {
-          return reply("Invalid agent code. Please enter a valid agent code.\n0. Main menu", true);
+          return reply("Invalid agent code. Please enter a valid agent code.\n0. Main menu", true, "WASSCE_AGENT");
         }
         const paddedCode = agentCode.replace(/[^0-9]/g, "").padStart(3, "0");
         const { data: aff } = await supabase
@@ -313,13 +249,14 @@ Deno.serve(async (req) => {
           .eq("source_hook", paddedCode)
           .maybeSingle();
         if (!aff) {
-          return reply("Agent code not found. Please enter a valid agent code.\n0. Main menu", true);
+          return reply("Agent code not found. Please enter a valid agent code.\n0. Main menu", true, "WASSCE_AGENT");
         }
         const { qty, total } = session.data;
         await saveSession("WASSCE_CONFIRM", { qty, total, agentCode: paddedCode });
         return reply(
           `You are purchasing ${qty} WASSCE result checker(s) for GHC${total.toFixed(2)}\n1. Confirm\n2. Cancel\n0. Main menu`,
           true,
+          "WASSCE_CONFIRM",
         );
       }
 
@@ -327,25 +264,20 @@ Deno.serve(async (req) => {
         if (USERDATA === "1") {
           const { qty, total, agentCode } = session.data;
           const reference = `MV-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
-          try {
-            await initiateCollection({
-              msisdn: MSISDN,
-              accountName: "USSD Customer",
-              amount: total,
-              reference,
-              network: NETWORK_RAW.toUpperCase(),
-              product: "wassce",
-              qty,
-              agentCode,
-            });
-            console.log(`[${reqId}] WASSCE payment initiated qty=${qty} total=${total} ref=${reference}`);
-          } catch (err) {
-            console.error(`[${reqId}] WASSCE payment error:`, err);
-            return reply("Payment could not be initiated. Please try again or contact support.", false);
-          }
-          return reply(
-            "Your purchase has been initiated. Please approve to confirm.\nDial *170# to approve if prompt delays.",
-            false,
+          await saveSession("AWAITING_PAYMENT", {
+            qty,
+            total,
+            agentCode,
+            product: "wassce",
+            reference,
+            msisdn: MSISDN,
+          });
+          console.log(`[${reqId}] WASSCE AddToCart qty=${qty} total=${total} ref=${reference}`);
+          return cart(
+            "The request has been submitted. Please wait for a payment prompt soon",
+            `WASSCE Result Checker x${qty}`,
+            qty,
+            Number(total),
           );
         }
         if (USERDATA === "2") {
@@ -353,30 +285,30 @@ Deno.serve(async (req) => {
         }
         if (USERDATA === "0") {
           await saveSession("MENU");
-          return reply(MAIN_MENU, true);
+          return reply(MAIN_MENU, true, "MENU");
         }
-        return reply("Invalid option.\n1. Confirm\n2. Cancel\n0. Main menu", true);
+        return reply("Invalid option.\n1. Confirm\n2. Cancel\n0. Main menu", true, "WASSCE_CONFIRM");
       }
 
       case "BECE_QTY": {
         const qty = parseInt(USERDATA);
         if (isNaN(qty) || qty < 1) {
-          return reply("Invalid quantity. Please enter a valid number.", true);
+          return reply("Invalid quantity. Please enter a valid number.", true, "BECE_QTY");
         }
         const price = qty >= 20 ? 17 : 30;
         const total = qty * price;
         await saveSession("BECE_AGENT", { qty, total });
-        return reply("Enter Agent code", true);
+        return reply("Enter Agent code", true, "BECE_AGENT");
       }
 
       case "BECE_AGENT": {
         if (USERDATA === "0") {
           await saveSession("MENU");
-          return reply(MAIN_MENU, true);
+          return reply(MAIN_MENU, true, "MENU");
         }
         const agentCode = USERDATA.trim();
         if (!agentCode) {
-          return reply("Invalid agent code. Please enter a valid agent code.\n0. Main menu", true);
+          return reply("Invalid agent code. Please enter a valid agent code.\n0. Main menu", true, "BECE_AGENT");
         }
         const paddedCode = agentCode.replace(/[^0-9]/g, "").padStart(3, "0");
         const { data: aff } = await supabase
@@ -385,13 +317,14 @@ Deno.serve(async (req) => {
           .eq("source_hook", paddedCode)
           .maybeSingle();
         if (!aff) {
-          return reply("Agent code not found. Please enter a valid agent code.\n0. Main menu", true);
+          return reply("Agent code not found. Please enter a valid agent code.\n0. Main menu", true, "BECE_AGENT");
         }
         const { qty, total } = session.data;
         await saveSession("BECE_CONFIRM", { qty, total, agentCode: paddedCode });
         return reply(
           `You are purchasing ${qty} BECE result checker(s) for GHC${total.toFixed(2)}\n1. Confirm\n2. Cancel\n0. Main menu`,
           true,
+          "BECE_CONFIRM",
         );
       }
 
@@ -399,25 +332,20 @@ Deno.serve(async (req) => {
         if (USERDATA === "1") {
           const { qty, total, agentCode } = session.data;
           const reference = `MV-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
-          try {
-            await initiateCollection({
-              msisdn: MSISDN,
-              accountName: "USSD Customer",
-              amount: total,
-              reference,
-              network: NETWORK_RAW.toUpperCase(),
-              product: "bece",
-              qty,
-              agentCode,
-            });
-            console.log(`[${reqId}] BECE payment initiated qty=${qty} total=${total} ref=${reference}`);
-          } catch (err) {
-            console.error(`[${reqId}] BECE payment error:`, err);
-            return reply("Payment could not be initiated. Please try again or contact support.", false);
-          }
-          return reply(
-            "Your purchase has been initiated. Please approve to confirm.\nDial *170# to approve if prompt delays.",
-            false,
+          await saveSession("AWAITING_PAYMENT", {
+            qty,
+            total,
+            agentCode,
+            product: "bece",
+            reference,
+            msisdn: MSISDN,
+          });
+          console.log(`[${reqId}] BECE AddToCart qty=${qty} total=${total} ref=${reference}`);
+          return cart(
+            "The request has been submitted. Please wait for a payment prompt soon",
+            `BECE Result Checker x${qty}`,
+            qty,
+            Number(total),
           );
         }
         if (USERDATA === "2") {
@@ -425,16 +353,16 @@ Deno.serve(async (req) => {
         }
         if (USERDATA === "0") {
           await saveSession("MENU");
-          return reply(MAIN_MENU, true);
+          return reply(MAIN_MENU, true, "MENU");
         }
-        return reply("Invalid option.\n1. Confirm\n2. Cancel\n0. Main menu", true);
+        return reply("Invalid option.\n1. Confirm\n2. Cancel\n0. Main menu", true, "BECE_CONFIRM");
       }
 
       case "RETRIEVE": {
         retreivevouch(USERDATA);
         console.log(`[${reqId}] Retrieve txnId="${USERDATA}"`);
         return reply(
-          `Looking up transaction ${USERDATA}... We will send details to your number shortly.`,
+          `Looking up transaction ${USERDATA}. We will send details to your number shortly.`,
           false,
         );
       }
@@ -442,7 +370,7 @@ Deno.serve(async (req) => {
       case "EMAIL_MENU": {
         if (USERDATA === "1") {
           await saveSession("EMAIL_ENTER");
-          return reply("Enter your email", true);
+          return reply("Enter your email", true, "EMAIL_ENTER");
         }
         if (USERDATA === "2") {
           const linkdetails = await retreive(MSISDN);
@@ -452,7 +380,7 @@ Deno.serve(async (req) => {
           }
           return reply(email, false);
         }
-        return reply("Invalid option.\n1. Link a new email\n2. View existing email", true);
+        return reply("Invalid option.\n1. Link a new email\n2. View existing email", true, "EMAIL_MENU");
       }
 
       case "EMAIL_ENTER": {
@@ -463,14 +391,21 @@ Deno.serve(async (req) => {
 
       default: {
         await saveSession("MENU");
-        return reply(MAIN_MENU, true);
+        return reply(MAIN_MENU, true, "MENU");
       }
     }
   } catch (err) {
     console.error(`[${reqId}] Error:`, err);
     return new Response(
-      JSON.stringify({ USERID: "", MSISDN: "", MSG: "System error. Please try again.", MSGTYPE: false }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({
+        SessionId: SESSIONID,
+        Type: "release",
+        Message: "System error. Please try again.",
+        Label: "Error",
+        DataType: "display",
+        FieldType: "text",
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });

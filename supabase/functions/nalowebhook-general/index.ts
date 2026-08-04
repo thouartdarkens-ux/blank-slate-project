@@ -121,6 +121,67 @@ const recordAndNotify = async (body: any) => {
     } catch (e) {
       console.error("[nalowebhook] balance calculation exception:", e);
     }
+
+    // Master accumulator: roll the sale into the 'Comission' record for source_hook 001
+    try {
+      const MASTER_HOOK = "001";
+      const { data: master, error: masterErr } = await supabaseAdmin
+        .from("webhook_transactions")
+        .select("id, amount, quantity")
+        .eq("reference", "Comission")
+        .eq("source_hook", MASTER_HOOK)
+        .maybeSingle();
+
+      if (masterErr) console.error("[nalowebhook] master lookup error:", masterErr);
+
+      if (master) {
+        const newAmount = +(Number(master.amount || 0) + Number(amount || 0)).toFixed(2);
+        const newQty = Number(master.quantity || 0) + Number(quantity || 0);
+        const { error: mUpdErr } = await supabaseAdmin
+          .from("webhook_transactions")
+          .update({ amount: newAmount, quantity: newQty })
+          .eq("id", master.id);
+        if (mUpdErr) console.error("[nalowebhook] master update error:", mUpdErr);
+        else console.log(`[nalowebhook] master record updated: amount=${newAmount} quantity=${newQty}`);
+      } else {
+        console.log("[nalowebhook] master 'Comission' record not found for source_hook 001");
+      }
+
+      const { data: masterAff, error: mAffErr } = await supabaseAdmin
+        .from("affiliates")
+        .select("id, balance, lifetime_commissions, sales_quantity, sales_amount, commission_rate")
+        .eq("source_hook", MASTER_HOOK)
+        .maybeSingle();
+
+      if (mAffErr) console.error("[nalowebhook] master affiliate lookup error:", mAffErr);
+
+      if (masterAff) {
+        const rate = Number(masterAff.commission_rate) || 0;
+        const commission = +(Number(amount || 0) * rate / 100).toFixed(2);
+        const balance = +(Number(masterAff.balance) + commission).toFixed(2);
+        const lifetime = +(Number(masterAff.lifetime_commissions) + commission).toFixed(2);
+        const salesQty = Number(masterAff.sales_quantity) + Number(quantity || 0);
+        const salesAmount = +(Number(masterAff.sales_amount) + Number(amount || 0)).toFixed(2);
+
+        const { error: mAffUpdErr } = await supabaseAdmin
+          .from("affiliates")
+          .update({
+            balance,
+            lifetime_commissions: lifetime,
+            sales_quantity: salesQty,
+            sales_amount: salesAmount,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", masterAff.id);
+
+        if (mAffUpdErr) console.error("[nalowebhook] master affiliate update error:", mAffUpdErr);
+        else console.log(`[nalowebhook] master affiliate ${masterAff.id} updated: balance=${balance} lifetime=${lifetime} salesQty=${salesQty} salesAmount=${salesAmount}`);
+      } else {
+        console.log("[nalowebhook] master affiliate with source_hook 001 not found");
+      }
+    } catch (e) {
+      console.error("[nalowebhook] master accumulation exception:", e);
+    }
   }
 
 };
@@ -178,7 +239,7 @@ const payload = {
   };
 
  const response = await fetch(
-    `https://iyagntncuhajyktsqtmm.supabase.co/functions/v1/buy-voucher-api`,
+    `https://iyagntncuhajyktsqtmm.supabase.co/functions/v1/buy-voucher-api-nalo`,
     {
       method: "POST",
       headers: {
@@ -196,7 +257,7 @@ const payload = {
         const senderId = "movaalerts";
         const recipients = [body?.extra_data?.phone_number];
         const fullName = body?.extra_data?.full_name || "N/A";
-        const message = `Checker purchase failed. Ensure MoMo wallet is funded. Dial *920*138# to retry again.`;
+        const message = `Checker purchase failed. Ensure MoMo wallet is funded and try again`;
         const smsRes = await fetch("https://sms.arkesel.com/api/v2/sms/send", {
           method: "POST",
           headers: {

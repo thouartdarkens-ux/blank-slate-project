@@ -19,7 +19,7 @@ const MAIN_MENU_PAGE_2 =
 const MAIN_MENU = MAIN_MENU_PAGE_1;
 
 const UPDATES_MSG =
-  "Dial *789*444# for WASSCE news. Likely Release Date: 18 Nov2025 @ 11am . Current Step: Result Quality check. Whatsapp: 0557956020 Final Result only";
+  "Dial *920*138# for BECE news. Likely Release Date: 15 July 2026. Current Step: Result Quality check. WhatsApp: 0241840979 (Final Result only).";
 
 type FormItem = { code: string; label: string; price: number };
 const FORMS: FormItem[] = [
@@ -264,11 +264,11 @@ Deno.serve(async (req) => {
       case "MENU": {
         if (USERDATA === "1") {
           await saveSession("BECE_QTY");
-          return reply("Enter number of checkers to buy", true);
+          return reply("Enter Quantity of checkers to buy", true);
         }
         if (USERDATA === "2") {
           await saveSession("WASSCE_QTY");
-          return reply("Enter number of checkers to buy", true);
+          return reply("Enter Quantity of checkers to buy", true);
         }
         if (USERDATA === "3") {
           await saveSession("FORMS_PAGE_1");
@@ -295,7 +295,7 @@ Deno.serve(async (req) => {
           return reply("Select option to continue\n1. Link a new email\n2. View existing email", true);
         }
         if (USERDATA === "6") {
-          return reply("Contact details 0557956020/0538848199", false);
+          return reply("Contact details 0241840979/0538848199", false);
         }
         if (USERDATA === "7") {
           return reply(UPDATES_MSG, false);
@@ -364,7 +364,7 @@ Deno.serve(async (req) => {
           return reply("Payment could not be initiated. Please try again or contact support.", false);
         }
         return reply(
-          "Your request is being processed. If prompt delays dial *170#.\nContact 0557956020 if you need assistance with filling the forms.",
+          "Your request is being processed. If prompt delays dial *170#.\nContact 0241840979 if you need assistance with filling the forms.",
           false,
         );
       }

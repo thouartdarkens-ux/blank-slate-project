@@ -77,7 +77,7 @@ Dial *389*603# again to retry.`;
 
       console.log('🚀 Calling voucher API:', { reference, phone_number, product: product_type, quantity, amount: amountCedis });
 
-      const response = await fetch('https://iyagntncuhajyktsqtmm.supabase.co/functions/v1/buy-voucher-api', {
+      const response = await fetch('https://iyagntncuhajyktsqtmm.supabase.co/functions/v1/buy-voucher-api-mnotify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

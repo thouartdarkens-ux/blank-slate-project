@@ -463,7 +463,6 @@ const AffiliateDashboard = () => {
                       <TableRow className="border-white/10 hover:bg-transparent">
                         <TableHead className="text-gray-200">Date</TableHead>
                         <TableHead className="text-gray-200">Reference</TableHead>
-                        <TableHead className="text-gray-200">Phone</TableHead>
                         <TableHead className="text-gray-200">Product</TableHead>
                         <TableHead className="text-gray-200">Qty</TableHead>
                         <TableHead className="text-gray-200">Amount</TableHead>
@@ -479,7 +478,6 @@ const AffiliateDashboard = () => {
                           <TableCell className="font-mono text-xs text-gray-100">
                             {t.reference || "-"}
                           </TableCell>
-                          <TableCell className="text-gray-100">{t.phone_number || "-"}</TableCell>
                           <TableCell className="text-gray-100">{t.product || "-"}</TableCell>
                           <TableCell className="text-gray-100">{t.quantity ?? "-"}</TableCell>
                           <TableCell className="text-gray-100">{fmt(Number(t.amount))}</TableCell>
@@ -527,7 +525,11 @@ const AffiliateDashboard = () => {
                           <TableCell>
                             <Badge variant={statusVariant(w.status)}>{w.status}</Badge>
                           </TableCell>
-                          <TableCell className="text-xs text-gray-100">{w.notes || "-"}</TableCell>
+                          <TableCell className="text-xs text-gray-100">
+                            <div className="max-w-[200px] max-h-16 overflow-y-auto whitespace-normal break-words">
+                              {w.notes || "-"}
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

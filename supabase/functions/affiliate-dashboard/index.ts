@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
         .select("*")
         .eq("source_hook", sourceHook)
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(1000);
       transactions = txs || [];
     }
 

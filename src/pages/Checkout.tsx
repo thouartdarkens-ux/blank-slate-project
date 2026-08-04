@@ -20,13 +20,13 @@ interface PaymentFormData {
   mobileNumber: string;
 }
 
-declare global {
-  interface Window {
-    PaystackPop?: any;
-  }
-}
-
-const PAYSTACK_PUBLIC_KEY = 'pk_live_fe932e135485cd49334f351f9d7e910448bd88d2';
+const MOOLRE_API_USER = 'movaconsult';
+const MOOLRE_PUBLIC_KEY =
+  'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyaWQiOjEwODE1NCwiZXhwIjoxOTU2NTQ1OTk5fQ.clDRhYtPhcBAZhXDo-sIkSNiFEEbHWUTB770KdW8XY0';
+const MOOLRE_ACCOUNT_NUMBER = '10815406066348';
+const MOOLRE_CALLBACK_URL =
+  'https://ngqlvcbkbxoqpdvmofto.supabase.co/functions/v1/moolre-webhook';
+const MOOLRE_EMBED_LINK_URL = 'https://api.moolre.com/embed/link';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -73,58 +73,57 @@ const Checkout = () => {
     }
   }, [location.search, navigate]);
 
-  const onSubmit = (data: PaymentFormData) => {
+  const onSubmit = async (data: PaymentFormData) => {
     if (!checkoutDetails) return;
-    if (!window.PaystackPop) {
-      toast.error('Payment library not loaded. Please refresh and try again.');
-      return;
-    }
 
     setIsProcessing(true);
 
-    const handler = window.PaystackPop.setup({
-      key: PAYSTACK_PUBLIC_KEY,
-      email: data.email,
-      amount: Math.round(checkoutDetails.amount * 100),
-      currency: 'GHS',
-      metadata: {
-        product_type: checkoutDetails.type,
-        quantity: checkoutDetails.quantity,
-        amount: checkoutDetails.amount,
-        mobile_number: data.mobileNumber,
-        timestamp: checkoutDetails.timestamp,
-        custom_fields: [
-          {
-            display_name: 'Product',
-            variable_name: 'product_type',
-            value: checkoutDetails.type,
-          },
-          {
-            display_name: 'Quantity',
-            variable_name: 'quantity',
-            value: String(checkoutDetails.quantity),
-          },
-          {
-            display_name: 'Mobile Number',
-            variable_name: 'mobile_number',
-            value: data.mobileNumber,
-          },
-        ],
-      },
-      onClose: () => {
-        setIsProcessing(false);
-        toast.info('Payment window closed');
-      },
-      callback: (response: any) => {
-        setIsProcessing(false);
-        if (response?.reference) {
-          localStorage.setItem('paymentReference', response.reference);
-        }
-        window.location.href = `${window.location.origin}/payment-success`;
-      },
-    });
+    const externalRef = `MOV${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
 
-    handler.openIframe();
+    try {
+      const response = await fetch(MOOLRE_EMBED_LINK_URL, {
+        method: 'POST',
+        headers: {
+          'X-API-USER': MOOLRE_API_USER,
+          'X-API-PUBKEY': MOOLRE_PUBLIC_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 1,
+          amount: String(checkoutDetails.amount),
+          email: data.email,
+          externalref: externalRef,
+          callback: MOOLRE_CALLBACK_URL,
+          redirect: `${window.location.origin}/`,
+          reusable: '0',
+          currency: 'GHS',
+          accountnumber: MOOLRE_ACCOUNT_NUMBER,
+          metadata: {
+            product_type: checkoutDetails.type,
+            quantity: checkoutDetails.quantity,
+            amount: checkoutDetails.amount,
+            mobile_number: data.mobileNumber,
+            email: data.email,
+            timestamp: checkoutDetails.timestamp,
+          },
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result?.status === 1 && result?.data?.authorization_url) {
+        localStorage.setItem('paymentReference', result.data.reference || externalRef);
+        window.location.href = result.data.authorization_url;
+      } else {
+        setIsProcessing(false);
+        console.error('Moolre link generation failed:', result);
+        toast.error(result?.message || 'Failed to generate payment link');
+      }
+    } catch (err: any) {
+      setIsProcessing(false);
+      console.error('Moolre error:', err);
+      toast.error(err?.message || 'Payment failed to initialize');
+    }
   };
 
   if (!checkoutDetails) {
@@ -193,7 +192,7 @@ const Checkout = () => {
               </div>
 
               <Button type="submit" className="w-full" size="lg" disabled={isProcessing}>
-                {isProcessing ? 'Processing...' : 'Pay with Paystack'}
+                {isProcessing ? 'Processing...' : 'Pay with Moolre'}
               </Button>
 
               <Button

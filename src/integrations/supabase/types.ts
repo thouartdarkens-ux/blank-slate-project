@@ -21,8 +21,11 @@ export type Database = {
           created_at: string
           id: string
           momo_name: string | null
+          momo_network: string | null
           momo_number: string | null
           notes: string | null
+          payout_error: string | null
+          payout_reference: string | null
           processed_at: string | null
           requested_at: string
           status: string
@@ -34,8 +37,11 @@ export type Database = {
           created_at?: string
           id?: string
           momo_name?: string | null
+          momo_network?: string | null
           momo_number?: string | null
           notes?: string | null
+          payout_error?: string | null
+          payout_reference?: string | null
           processed_at?: string | null
           requested_at?: string
           status?: string
@@ -47,8 +53,11 @@ export type Database = {
           created_at?: string
           id?: string
           momo_name?: string | null
+          momo_network?: string | null
           momo_number?: string | null
           notes?: string | null
+          payout_error?: string | null
+          payout_reference?: string | null
           processed_at?: string | null
           requested_at?: string
           status?: string
@@ -163,6 +172,39 @@ export type Database = {
         }
         Relationships: []
       }
+      BOTtransactions: {
+        Row: {
+          amount: number | null
+          created_at: string
+          external_ref: string
+          network: string | null
+          phone_number: string
+          product: string
+          quantity: number
+          status: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          external_ref: string
+          network?: string | null
+          phone_number: string
+          product: string
+          quantity: number
+          status?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          external_ref?: string
+          network?: string | null
+          phone_number?: string
+          product?: string
+          quantity?: number
+          status?: string
+        }
+        Relationships: []
+      }
       bundle_prices: {
         Row: {
           capacity: string
@@ -195,6 +237,45 @@ export type Database = {
           mb?: string
           network?: string
           selling_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chatbot_processed_messages: {
+        Row: {
+          message_id: string
+          phone_number: string | null
+          processed_at: string
+        }
+        Insert: {
+          message_id: string
+          phone_number?: string | null
+          processed_at?: string
+        }
+        Update: {
+          message_id?: string
+          phone_number?: string | null
+          processed_at?: string
+        }
+        Relationships: []
+      }
+      chatbot_sessions: {
+        Row: {
+          phone_number: string
+          session_data: Json
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          phone_number: string
+          session_data?: Json
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          phone_number?: string
+          session_data?: Json
+          stage?: string
           updated_at?: string
         }
         Relationships: []
@@ -421,6 +502,117 @@ export type Database = {
         }
         Relationships: []
       }
+      nalowebhook_transactions: {
+        Row: {
+          amount: number | null
+          created_at: string
+          full_name: string | null
+          id: string
+          phone_number: string | null
+          product: string | null
+          quantity: number | null
+          raw_payload: Json | null
+          reference: string | null
+          source_hook: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          product?: string | null
+          quantity?: number | null
+          raw_payload?: Json | null
+          reference?: string | null
+          source_hook?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          product?: string | null
+          quantity?: number | null
+          raw_payload?: Json | null
+          reference?: string | null
+          source_hook?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payout_transactions: {
+        Row: {
+          affiliate_id: string | null
+          amount: number
+          created_at: string
+          external_ref: string | null
+          id: string
+          network: string | null
+          raw_response: Json | null
+          recipient_name: string | null
+          recipient_number: string | null
+          response_code: string | null
+          response_message: string | null
+          status: string
+          type: string
+          withdrawal_id: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          amount?: number
+          created_at?: string
+          external_ref?: string | null
+          id?: string
+          network?: string | null
+          raw_response?: Json | null
+          recipient_name?: string | null
+          recipient_number?: string | null
+          response_code?: string | null
+          response_message?: string | null
+          status?: string
+          type?: string
+          withdrawal_id?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          amount?: number
+          created_at?: string
+          external_ref?: string | null
+          id?: string
+          network?: string | null
+          raw_response?: Json | null
+          recipient_name?: string | null
+          recipient_number?: string | null
+          response_code?: string | null
+          response_message?: string | null
+          status?: string
+          type?: string
+          withdrawal_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_transactions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payout_transactions_withdrawal_id_fkey"
+            columns: ["withdrawal_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_withdrawals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       university_data: {
         Row: {
           admission_end_date: string | null
@@ -618,6 +810,57 @@ export type Database = {
           session_data?: Json
           session_id?: string
           stage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      voucher_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          datamart_transaction_id: string | null
+          description: string | null
+          id: string
+          phone_number: string
+          pin: string | null
+          product: string
+          quantity: number
+          reference: string
+          serial: string | null
+          sms_status: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          datamart_transaction_id?: string | null
+          description?: string | null
+          id?: string
+          phone_number: string
+          pin?: string | null
+          product: string
+          quantity?: number
+          reference: string
+          serial?: string | null
+          sms_status?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          datamart_transaction_id?: string | null
+          description?: string | null
+          id?: string
+          phone_number?: string
+          pin?: string | null
+          product?: string
+          quantity?: number
+          reference?: string
+          serial?: string | null
+          sms_status?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: []
