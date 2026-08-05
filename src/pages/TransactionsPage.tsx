@@ -18,12 +18,14 @@ import { Pencil } from "lucide-react";
 import { CustomersTable } from "@/components/transactions/CustomersTable";
 import { AnalyticsTab } from "@/components/transactions/AnalyticsTab";
 import { PendingTransactionsTable } from "@/components/transactions/PendingTransactionsTable";
+import { DateRangeFilter, DateRange, defaultDateRange } from "@/components/DateRangeFilter";
 
 export default function TransactionsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [range, setRange] = useState<DateRange>(defaultDateRange);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +42,8 @@ export default function TransactionsPage() {
       const { data: transactionData, error: transactionError } = await supabase
         .from('transactions')
         .select('*, customers(*)')
+        .gte('date', new Date(`${range.from}T00:00:00.000`).toISOString())
+        .lte('date', new Date(`${range.to}T23:59:59.999`).toISOString())
         .order('date', { ascending: false });
       
       if (transactionError) throw transactionError;
@@ -121,7 +125,8 @@ export default function TransactionsPage() {
   
   useEffect(() => {
     fetchData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [range.from, range.to]);
   
   const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch = 
@@ -230,6 +235,7 @@ export default function TransactionsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <DateRangeFilter value={range} onChange={setRange} />
               <div className="flex-1 relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
