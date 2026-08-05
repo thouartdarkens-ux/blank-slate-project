@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { MainLayout } from "@/components/MainLayout";
 import { TransactionList } from "@/components/TransactionList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,9 +8,12 @@ import { SalesOverviewChart } from "@/components/dashboard/SalesOverviewChart";
 import { InventorySummary } from "@/components/dashboard/InventorySummary";
 import { ProfitCards } from "@/components/dashboard/ProfitCards";
 import { AffiliateCommissionCards } from "@/components/dashboard/AffiliateCommissionCards";
+import { DateRangeFilter, DateRange, defaultDateRange } from "@/components/DateRangeFilter";
 
 export default function DashboardPage() {
-  const { dailyRevenueData, salesData, inventoryData, transactions, dashboardMetrics } = useDashboardData();
+  const [range, setRange] = useState<DateRange>(defaultDateRange);
+  const { dailyRevenueData, salesData, inventoryData, transactions, dashboardMetrics } =
+    useDashboardData(range);
 
   const emptyInventoryData = { 
     total: 0, 
@@ -19,15 +23,18 @@ export default function DashboardPage() {
   return (
     <MainLayout title="Dashboard">
       <div className="space-y-6 animate-fade-in">
+        <DateRangeFilter value={range} onChange={setRange} />
+
         <StatCards 
           salesData={salesData || []}
           totalInventory={inventoryData?.total || 0}
           metrics={dashboardMetrics}
+          rangeRevenue={dailyRevenueData?.total_revenue}
         />
         
-        <ProfitCards />
+        <ProfitCards range={range} />
 
-        <AffiliateCommissionCards />
+        <AffiliateCommissionCards range={range} onRangeChange={setRange} />
 
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>

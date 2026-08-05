@@ -3,11 +3,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfitData } from "@/hooks/useProfitData";
 import { StatCard } from "@/components/StatCard";
 import { TrendingUp, Wallet } from "lucide-react";
+import { DateRange, defaultDateRange } from "@/components/DateRangeFilter";
 
-export function ProfitCards() {
+interface ProfitCardsProps {
+  range?: DateRange;
+}
+
+export function ProfitCards({ range }: ProfitCardsProps) {
   const { calculateProfit } = useProfitData();
+  const effectiveRange = range ?? defaultDateRange();
+  const fromISO = new Date(`${effectiveRange.from}T00:00:00.000`).toISOString();
+  const toISO = new Date(`${effectiveRange.to}T23:59:59.999`).toISOString();
 
-  // Fetch today's completed transactions
+  // Today's completed transactions
   const { data: todayData } = useQuery({
     queryKey: ["today-profit-transactions"],
     queryFn: async () => {
@@ -33,14 +41,16 @@ export function ProfitCards() {
     },
   });
 
-  // Fetch total completed transactions
-  const { data: totalData } = useQuery({
-    queryKey: ["total-profit-transactions"],
+  // Completed transactions within the selected range
+  const { data: rangeData } = useQuery({
+    queryKey: ["range-profit-transactions", fromISO, toISO],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("transactions")
         .select("product, quantity, amount, reference")
-        .eq("status", "completed");
+        .eq("status", "completed")
+        .gte("date", fromISO)
+        .lte("date", toISO);
 
       if (error) throw error;
       return (data || []).map((t: any) => ({
@@ -53,24 +63,24 @@ export function ProfitCards() {
   });
 
   const dailyProfit = todayData ? calculateProfit(todayData) : null;
-  const totalProfit = totalData ? calculateProfit(totalData) : null;
+  const rangeProfit = rangeData ? calculateProfit(rangeData) : null;
 
   const dailyRevenue = todayData
     ? todayData.reduce((sum, t) => sum + t.amount, 0)
     : 0;
-  const totalRevenue = totalData
-    ? totalData.reduce((sum, t) => sum + t.amount, 0)
+  const rangeRevenue = rangeData
+    ? rangeData.reduce((sum, t) => sum + t.amount, 0)
     : 0;
 
-  const dailyTotalSales = todayData
-    ? todayData.reduce((sum, t) => sum + t.quantity, 0)
+  const rangeTotalSales = rangeData
+    ? rangeData.reduce((sum, t) => sum + t.quantity, 0)
     : 0;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <StatCard
-        title="Daily Sales (Qty)"
-        value={dailyTotalSales.toString()}
+        title="Sales (Qty) — selected range"
+        value={rangeTotalSales.toString()}
         icon={TrendingUp}
         className="bg-gradient-to-br from-cyan-50 to-teal-100 dark:from-cyan-900/20 dark:to-teal-800/30"
       />
@@ -86,11 +96,11 @@ export function ProfitCards() {
         className="bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-900/20 dark:to-green-800/30"
       />
       <StatCard
-        title="Total Profit"
-        value={`₵${(totalProfit !== null ? totalProfit : totalRevenue).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        title="Profit — selected range"
+        value={`₵${(rangeProfit !== null ? rangeProfit : rangeRevenue).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         icon={Wallet}
         trend={
-          totalProfit === null
+          rangeProfit === null
             ? { value: 0, label: "set cost prices in Voucher Types", positive: true }
             : undefined
         }

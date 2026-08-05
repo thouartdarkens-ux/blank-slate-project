@@ -20,32 +20,27 @@ interface StatCardsProps {
   salesData: SalesDataPoint[];
   totalInventory: number;
   metrics: DashboardMetrics | undefined;
+  rangeRevenue?: number;
 }
 
-export function StatCards({ salesData, totalInventory, metrics }: StatCardsProps) {
-  // Format today's date in the same format as in the sales data (e.g., "May 7")
+export function StatCards({ salesData, totalInventory, metrics, rangeRevenue }: StatCardsProps) {
+  // Today's revenue (only meaningful when today falls in the selected range)
   const today = new Date();
   const todayFormatted = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  
-  // Find today's revenue in the sales data
   const todaySalesEntry = salesData.find(item => item.name === todayFormatted);
   const todayRevenue = todaySalesEntry ? todaySalesEntry.total : 0;
-  
-  // Get yesterday's date and format it the same way
+
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayFormatted = yesterday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  
-  // Find yesterday's revenue in the sales data
   const yesterdaySalesEntry = salesData.find(item => item.name === yesterdayFormatted);
   const yesterdayRevenue = yesterdaySalesEntry ? yesterdaySalesEntry.total : 0;
-  
-  // Calculate the daily revenue trend percentage
+
   let dailyRevenueTrend = 0;
   if (yesterdayRevenue > 0) {
     dailyRevenueTrend = ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100;
   }
-  
+
   // Inventory trend (static value for now)
   const inventoryTrend = 8.5;
 
@@ -63,18 +58,14 @@ export function StatCards({ salesData, totalInventory, metrics }: StatCardsProps
         className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-emerald-800/30"
       />
       <StatCard 
-        title="Total Revenue" 
-        value={metrics ? `₵${metrics.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "₵0.00"} 
+        title="Revenue — selected range" 
+        value={`₵${Number(rangeRevenue ?? metrics?.totalRevenue ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
         icon={CreditCard} 
-        trend={{
-          value: Math.abs(metrics?.monthlyRevenueTrend || 0),
-          label: "from last month",
-          positive: (metrics?.monthlyRevenueTrend || 0) >= 0
-        }}
+
         className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-800/30"
       />
       <StatCard 
-        title="Sales" 
+        title="Sales — selected range" 
         value={metrics ? metrics.totalSales.toString() : "0"} 
         icon={TrendingUp} 
         trend={{
@@ -96,7 +87,7 @@ export function StatCards({ salesData, totalInventory, metrics }: StatCardsProps
         className="bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/20 dark:to-orange-800/30"
       />
       <StatCard 
-        title="Unique Customers" 
+        title="Customers — selected range" 
         value={metrics ? metrics.totalCustomers.toString() : "0"} 
         icon={Users} 
         trend={{
