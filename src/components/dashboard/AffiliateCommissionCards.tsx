@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Percent, Trophy, Users } from "lucide-react";
 import { useAffiliateAnalytics } from "@/hooks/useAffiliateAnalytics";
+import { DateRangeFilter, DateRange, defaultDateRange } from "@/components/DateRangeFilter";
 
 const cedis = (n: number) =>
   `₵${Number(n || 0).toLocaleString("en-US", {
@@ -11,11 +13,14 @@ const cedis = (n: number) =>
   })}`;
 
 export function AffiliateCommissionCards() {
-  const { totals, leaderboard, isLoading } = useAffiliateAnalytics();
+  const [range, setRange] = useState<DateRange>(defaultDateRange);
+  const { totals, leaderboard, isLoading } = useAffiliateAnalytics(range);
   const top = leaderboard.slice(0, 3);
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="space-y-4">
+      <DateRangeFilter value={range} onChange={setRange} />
+      <div className="grid gap-4 md:grid-cols-3">
       <Card className="bg-gradient-to-br from-teal-50 to-cyan-100 dark:from-teal-900/20 dark:to-cyan-800/30">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium">Affiliate Commissions</CardTitle>
