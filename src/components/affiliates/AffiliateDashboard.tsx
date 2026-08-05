@@ -123,7 +123,8 @@ export function AffiliateDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <DateRangeFilter value={range} onChange={setRange} />
         <Button variant="outline" onClick={refetch} disabled={isLoading} className="gap-2">
           <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           Refresh
