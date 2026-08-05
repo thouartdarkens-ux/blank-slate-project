@@ -59,13 +59,9 @@ export function StatCards({ salesData, totalInventory, metrics, rangeRevenue }: 
       />
       <StatCard 
         title="Revenue — selected range" 
-        value={metrics ? `₵${metrics.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "₵0.00"} 
+        value={`₵${Number(rangeRevenue ?? metrics?.totalRevenue ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
         icon={CreditCard} 
-        trend={{
-          value: Math.abs(metrics?.monthlyRevenueTrend || 0),
-          label: "from last month",
-          positive: (metrics?.monthlyRevenueTrend || 0) >= 0
-        }}
+
         className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-800/30"
       />
       <StatCard 
