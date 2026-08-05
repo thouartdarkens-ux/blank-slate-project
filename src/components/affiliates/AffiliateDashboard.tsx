@@ -87,7 +87,8 @@ function AffiliateBadgeCard({ entry }: { entry: LeaderboardEntry }) {
 }
 
 export function AffiliateDashboard() {
-  const { leaderboard, totals, isLoading, refetch } = useAffiliateAnalytics();
+  const [range, setRange] = useState<DateRange>(defaultDateRange);
+  const { leaderboard, totals, isLoading, refetch } = useAffiliateAnalytics(range);
   const [selected, setSelected] = useState<string | null>(null);
 
   const selectedEntry = leaderboard.find((e) => e.sourceHook === selected);
