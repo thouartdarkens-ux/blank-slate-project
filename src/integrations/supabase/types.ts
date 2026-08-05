@@ -14,908 +14,648 @@ export type Database = {
   }
   public: {
     Tables: {
-      affiliate_withdrawals: {
+      aggregator_prefixes: {
         Row: {
-          affiliate_id: string
-          amount: number
-          created_at: string
+          charge_percentage: number
+          created_at: string | null
           id: string
-          momo_name: string | null
-          momo_network: string | null
-          momo_number: string | null
-          notes: string | null
-          payout_error: string | null
-          payout_reference: string | null
-          processed_at: string | null
-          requested_at: string
-          status: string
-          updated_at: string
+          prefix: string
+          title: string
+          updated_at: string | null
         }
         Insert: {
-          affiliate_id: string
-          amount: number
-          created_at?: string
+          charge_percentage?: number
+          created_at?: string | null
           id?: string
-          momo_name?: string | null
-          momo_network?: string | null
-          momo_number?: string | null
-          notes?: string | null
-          payout_error?: string | null
-          payout_reference?: string | null
-          processed_at?: string | null
-          requested_at?: string
-          status?: string
-          updated_at?: string
+          prefix: string
+          title: string
+          updated_at?: string | null
         }
         Update: {
-          affiliate_id?: string
-          amount?: number
-          created_at?: string
+          charge_percentage?: number
+          created_at?: string | null
           id?: string
-          momo_name?: string | null
-          momo_network?: string | null
-          momo_number?: string | null
-          notes?: string | null
-          payout_error?: string | null
-          payout_reference?: string | null
-          processed_at?: string | null
-          requested_at?: string
-          status?: string
-          updated_at?: string
+          prefix?: string
+          title?: string
+          updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "affiliate_withdrawals_affiliate_id_fkey"
-            columns: ["affiliate_id"]
-            isOneToOne: false
-            referencedRelation: "affiliates"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      affiliates: {
+      alert_settings: {
         Row: {
-          balance: number
-          commission_rate: number
-          created_at: string
-          email: string | null
-          full_name: string
+          created_at: string | null
+          enabled: boolean | null
           id: string
-          lifetime_commissions: number
-          momo_name: string | null
-          momo_network: string | null
-          momo_number: string | null
-          password_hash: string
-          phone: string | null
-          sales_amount: number
-          sales_quantity: number
-          source_hook: string
-          updated_at: string
-          username: string
-          ussd: string | null
-          ussd_code: string | null
-          webhook: string | null
+          threshold: number | null
+          type: string
+          updated_at: string | null
         }
         Insert: {
-          balance?: number
-          commission_rate?: number
-          created_at?: string
-          email?: string | null
-          full_name: string
+          created_at?: string | null
+          enabled?: boolean | null
           id?: string
-          lifetime_commissions?: number
-          momo_name?: string | null
-          momo_network?: string | null
-          momo_number?: string | null
-          password_hash: string
-          phone?: string | null
-          sales_amount?: number
-          sales_quantity?: number
-          source_hook: string
-          updated_at?: string
-          username: string
-          ussd?: string | null
-          ussd_code?: string | null
-          webhook?: string | null
+          threshold?: number | null
+          type: string
+          updated_at?: string | null
         }
         Update: {
-          balance?: number
-          commission_rate?: number
-          created_at?: string
-          email?: string | null
-          full_name?: string
+          created_at?: string | null
+          enabled?: boolean | null
           id?: string
-          lifetime_commissions?: number
-          momo_name?: string | null
-          momo_network?: string | null
-          momo_number?: string | null
-          password_hash?: string
-          phone?: string | null
-          sales_amount?: number
-          sales_quantity?: number
-          source_hook?: string
-          updated_at?: string
-          username?: string
-          ussd?: string | null
-          ussd_code?: string | null
-          webhook?: string | null
+          threshold?: number | null
+          type?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
-      balance_alerts: {
+      alerts: {
         Row: {
-          created_at: string
+          created_at: string | null
+          data: Json | null
           id: string
-          is_active: boolean
-          last_alert_sent_at: string | null
-          phone_numbers: string[]
-          threshold: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          last_alert_sent_at?: string | null
-          phone_numbers?: string[]
-          threshold?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          last_alert_sent_at?: string | null
-          phone_numbers?: string[]
-          threshold?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      BOTtransactions: {
-        Row: {
-          amount: number | null
-          created_at: string
-          external_ref: string
-          network: string | null
-          phone_number: string
-          product: string
-          quantity: number
-          status: string
-        }
-        Insert: {
-          amount?: number | null
-          created_at?: string
-          external_ref: string
-          network?: string | null
-          phone_number: string
-          product: string
-          quantity: number
-          status?: string
-        }
-        Update: {
-          amount?: number | null
-          created_at?: string
-          external_ref?: string
-          network?: string | null
-          phone_number?: string
-          product?: string
-          quantity?: number
-          status?: string
-        }
-        Relationships: []
-      }
-      bundle_prices: {
-        Row: {
-          capacity: string
-          cost_price: number
-          created_at: string
-          id: string
-          in_stock: boolean
-          mb: string
-          network: string
-          selling_price: number
-          updated_at: string
-        }
-        Insert: {
-          capacity: string
-          cost_price: number
-          created_at?: string
-          id?: string
-          in_stock?: boolean
-          mb: string
-          network: string
-          selling_price?: number
-          updated_at?: string
-        }
-        Update: {
-          capacity?: string
-          cost_price?: number
-          created_at?: string
-          id?: string
-          in_stock?: boolean
-          mb?: string
-          network?: string
-          selling_price?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      chatbot_processed_messages: {
-        Row: {
-          message_id: string
-          phone_number: string | null
-          processed_at: string
-        }
-        Insert: {
-          message_id: string
-          phone_number?: string | null
-          processed_at?: string
-        }
-        Update: {
-          message_id?: string
-          phone_number?: string | null
-          processed_at?: string
-        }
-        Relationships: []
-      }
-      chatbot_sessions: {
-        Row: {
-          phone_number: string
-          session_data: Json
-          stage: string
-          updated_at: string
-        }
-        Insert: {
-          phone_number: string
-          session_data?: Json
-          stage?: string
-          updated_at?: string
-        }
-        Update: {
-          phone_number?: string
-          session_data?: Json
-          stage?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      course_requirements: {
-        Row: {
-          course_name: string
-          created_at: string
-          id: string
-          requirements: Json
-          university_name: string
-          updated_at: string
-        }
-        Insert: {
-          course_name: string
-          created_at?: string
-          id?: string
-          requirements?: Json
-          university_name: string
-          updated_at?: string
-        }
-        Update: {
-          course_name?: string
-          created_at?: string
-          id?: string
-          requirements?: Json
-          university_name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      data_transactions: {
-        Row: {
-          amount: number
-          balance_after: number | null
-          balance_before: number | null
-          capacity: string
-          created_at: string
-          error_message: string | null
-          id: string
-          network: string
-          order_reference: string | null
-          paystack_id: string | null
-          phone_number: string
-          processing_method: string | null
-          purchase_id: string | null
-          status: string
-          transaction_reference: string | null
-          updated_at: string
-        }
-        Insert: {
-          amount: number
-          balance_after?: number | null
-          balance_before?: number | null
-          capacity: string
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          network: string
-          order_reference?: string | null
-          paystack_id?: string | null
-          phone_number: string
-          processing_method?: string | null
-          purchase_id?: string | null
-          status?: string
-          transaction_reference?: string | null
-          updated_at?: string
-        }
-        Update: {
-          amount?: number
-          balance_after?: number | null
-          balance_before?: number | null
-          capacity?: string
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          network?: string
-          order_reference?: string | null
-          paystack_id?: string | null
-          phone_number?: string
-          processing_method?: string | null
-          purchase_id?: string | null
-          status?: string
-          transaction_reference?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      eligibility_checks: {
-        Row: {
-          aggregate_score: number
-          amount_paid: number
-          core_subjects: Json
-          created_at: string
-          elective_subjects: Json
-          eligible_courses: Json
-          email: string
-          exam_type: string
-          id: string
-          payment_reference: string | null
-          payment_status: string
-          phone_number: string
-          selected_university: string
-          updated_at: string
-        }
-        Insert: {
-          aggregate_score: number
-          amount_paid: number
-          core_subjects: Json
-          created_at?: string
-          elective_subjects: Json
-          eligible_courses?: Json
-          email: string
-          exam_type: string
-          id?: string
-          payment_reference?: string | null
-          payment_status?: string
-          phone_number: string
-          selected_university: string
-          updated_at?: string
-        }
-        Update: {
-          aggregate_score?: number
-          amount_paid?: number
-          core_subjects?: Json
-          created_at?: string
-          elective_subjects?: Json
-          eligible_courses?: Json
-          email?: string
-          exam_type?: string
-          id?: string
-          payment_reference?: string | null
-          payment_status?: string
-          phone_number?: string
-          selected_university?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      manual_processing_settings: {
-        Row: {
-          admin_phone: string
-          created_at: string
-          id: string
-          is_active: boolean
-          updated_at: string
-        }
-        Insert: {
-          admin_phone?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          updated_at?: string
-        }
-        Update: {
-          admin_phone?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      nalo_templates: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          template_source: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          template_source: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          template_source?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      nalo_ussd_sessions: {
-        Row: {
-          created_at: string
-          id: string
-          msisdn: string
-          network: string | null
-          session_data: Json
-          session_id: string
-          stage: string
-          updated_at: string
-          userid: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          msisdn: string
-          network?: string | null
-          session_data?: Json
-          session_id: string
-          stage?: string
-          updated_at?: string
-          userid: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          msisdn?: string
-          network?: string | null
-          session_data?: Json
-          session_id?: string
-          stage?: string
-          updated_at?: string
-          userid?: string
-        }
-        Relationships: []
-      }
-      nalowebhook_transactions: {
-        Row: {
-          amount: number | null
-          created_at: string
-          full_name: string | null
-          id: string
-          phone_number: string | null
-          product: string | null
-          quantity: number | null
-          raw_payload: Json | null
-          reference: string | null
-          source_hook: string | null
+          message: string
           status: string | null
-          updated_at: string
+          type: string
+          updated_at: string | null
         }
         Insert: {
-          amount?: number | null
-          created_at?: string
-          full_name?: string | null
+          created_at?: string | null
+          data?: Json | null
           id?: string
-          phone_number?: string | null
-          product?: string | null
-          quantity?: number | null
-          raw_payload?: Json | null
-          reference?: string | null
-          source_hook?: string | null
+          message: string
           status?: string | null
-          updated_at?: string
+          type: string
+          updated_at?: string | null
         }
         Update: {
-          amount?: number | null
-          created_at?: string
-          full_name?: string | null
+          created_at?: string | null
+          data?: Json | null
           id?: string
-          phone_number?: string | null
-          product?: string | null
-          quantity?: number | null
-          raw_payload?: Json | null
-          reference?: string | null
-          source_hook?: string | null
+          message?: string
           status?: string | null
-          updated_at?: string
+          type?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
-      payout_transactions: {
+      checkout: {
         Row: {
-          affiliate_id: string | null
           amount: number
-          created_at: string
-          external_ref: string | null
+          created_at: string | null
+          email: string
           id: string
-          network: string | null
-          raw_response: Json | null
-          recipient_name: string | null
-          recipient_number: string | null
-          response_code: string | null
-          response_message: string | null
+          mobile_number: string
+          name: string
+          processed: boolean | null
+          quantity: number
+          reference: string | null
           status: string
           type: string
-          withdrawal_id: string | null
         }
         Insert: {
-          affiliate_id?: string | null
-          amount?: number
-          created_at?: string
-          external_ref?: string | null
+          amount: number
+          created_at?: string | null
+          email: string
           id?: string
-          network?: string | null
-          raw_response?: Json | null
-          recipient_name?: string | null
-          recipient_number?: string | null
-          response_code?: string | null
-          response_message?: string | null
+          mobile_number: string
+          name: string
+          processed?: boolean | null
+          quantity: number
+          reference?: string | null
           status?: string
-          type?: string
-          withdrawal_id?: string | null
+          type: string
         }
         Update: {
-          affiliate_id?: string | null
           amount?: number
-          created_at?: string
-          external_ref?: string | null
+          created_at?: string | null
+          email?: string
           id?: string
-          network?: string | null
-          raw_response?: Json | null
-          recipient_name?: string | null
-          recipient_number?: string | null
-          response_code?: string | null
-          response_message?: string | null
+          mobile_number?: string
+          name?: string
+          processed?: boolean | null
+          quantity?: number
+          reference?: string | null
           status?: string
           type?: string
-          withdrawal_id?: string | null
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          phone_number: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone_number: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone_number?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      inventory: {
+        Row: {
+          created_at: string | null
+          id: string
+          pin: string
+          serial: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          pin: string
+          serial: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          pin?: string
+          serial?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      notification_settings: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          phone_number: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          phone_number: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          phone_number?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      product: {
+        Row: {
+          count: number | null
+          created_at: string | null
+          name: string
+          price: number
+          updated_at: string | null
+        }
+        Insert: {
+          count?: number | null
+          created_at?: string | null
+          name: string
+          price: number
+          updated_at?: string | null
+        }
+        Update: {
+          count?: number | null
+          created_at?: string | null
+          name?: string
+          price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          auth_id: string | null
+          created_at: string | null
+          department: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auth_id?: string | null
+          created_at?: string | null
+          department?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auth_id?: string | null
+          created_at?: string | null
+          department?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "payout_transactions_affiliate_id_fkey"
-            columns: ["affiliate_id"]
+            foreignKeyName: "profiles_auth_id_fkey"
+            columns: ["auth_id"]
             isOneToOne: false
-            referencedRelation: "affiliates"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payout_transactions_withdrawal_id_fkey"
-            columns: ["withdrawal_id"]
-            isOneToOne: false
-            referencedRelation: "affiliate_withdrawals"
+            referencedRelation: "users_auth"
             referencedColumns: ["id"]
           },
         ]
       }
-      university_data: {
+      sent_sms_alerts: {
         Row: {
-          admission_end_date: string | null
-          admission_start_date: string | null
-          course_description: string | null
-          created_at: string
-          cutoff_point: number | null
-          Faculty: string
-          form_purchase_info: string | null
+          alert_id: string | null
+          alert_type: string
+          created_at: string | null
           id: string
-          level: string | null
-          location: string | null
-          official_website: string | null
-          programme: string
-          requirements: string | null
-          university: string
-          updated_at: string
+          message: string
+          phone_number: string
+          status: string
+          updated_at: string | null
         }
         Insert: {
-          admission_end_date?: string | null
-          admission_start_date?: string | null
-          course_description?: string | null
-          created_at?: string
-          cutoff_point?: number | null
-          Faculty: string
-          form_purchase_info?: string | null
+          alert_id?: string | null
+          alert_type: string
+          created_at?: string | null
           id?: string
-          level?: string | null
-          location?: string | null
-          official_website?: string | null
-          programme: string
-          requirements?: string | null
-          university: string
-          updated_at?: string
+          message: string
+          phone_number: string
+          status?: string
+          updated_at?: string | null
         }
         Update: {
-          admission_end_date?: string | null
-          admission_start_date?: string | null
-          course_description?: string | null
-          created_at?: string
-          cutoff_point?: number | null
-          Faculty?: string
-          form_purchase_info?: string | null
+          alert_id?: string | null
+          alert_type?: string
+          created_at?: string | null
           id?: string
-          level?: string | null
-          location?: string | null
-          official_website?: string | null
-          programme?: string
-          requirements?: string | null
-          university?: string
-          updated_at?: string
+          message?: string
+          phone_number?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sent_sms_alerts_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sold_vouchers: {
+        Row: {
+          id: string
+          phone_number: string
+          pin: string
+          reference: string | null
+          serial: string
+          sold_at: string
+          type: string
+        }
+        Insert: {
+          id?: string
+          phone_number: string
+          pin: string
+          reference?: string | null
+          serial: string
+          sold_at?: string
+          type: string
+        }
+        Update: {
+          id?: string
+          phone_number?: string
+          pin?: string
+          reference?: string | null
+          serial?: string
+          sold_at?: string
+          type?: string
         }
         Relationships: []
       }
-      university_payments: {
+      transactions: {
         Row: {
-          amount_paid: number
-          created_at: string
-          email: string
+          amount: number
+          customer_id: string | null
+          date: string
+          email: string | null
           id: string
-          payment_reference: string | null
+          name: string | null
           phone_number: string
-          university_name: string
-          updated_at: string
+          product: string | null
+          quantity: number
+          reference: string | null
+          status: string
         }
         Insert: {
-          amount_paid: number
-          created_at?: string
-          email: string
+          amount?: number
+          customer_id?: string | null
+          date?: string
+          email?: string | null
           id?: string
-          payment_reference?: string | null
+          name?: string | null
           phone_number: string
-          university_name: string
-          updated_at?: string
+          product?: string | null
+          quantity?: number
+          reference?: string | null
+          status?: string
         }
         Update: {
-          amount_paid?: number
-          created_at?: string
-          email?: string
+          amount?: number
+          customer_id?: string | null
+          date?: string
+          email?: string | null
           id?: string
-          payment_reference?: string | null
+          name?: string | null
           phone_number?: string
-          university_name?: string
-          updated_at?: string
+          product?: string | null
+          quantity?: number
+          reference?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_transaction_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          password: string
+          updated_at: string | null
+          user_id: number
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          password: string
+          updated_at?: string | null
+          user_id?: never
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          password?: string
+          updated_at?: string | null
+          user_id?: never
+          username?: string
         }
         Relationships: []
       }
-      user_sessions: {
+      users_auth: {
         Row: {
-          created_at: string
-          email: string
-          expires_at: string
+          created_at: string | null
+          email: string | null
           id: string
-          payment_status: string
-          phone_number: string
-          session_token: string
-          updated_at: string
+          is_admin: boolean | null
+          password: string
+          phone: string | null
+          updated_at: string | null
+          username: string
         }
         Insert: {
-          created_at?: string
-          email: string
-          expires_at?: string
+          created_at?: string | null
+          email?: string | null
           id?: string
-          payment_status?: string
-          phone_number: string
-          session_token: string
-          updated_at?: string
+          is_admin?: boolean | null
+          password: string
+          phone?: string | null
+          updated_at?: string | null
+          username: string
         }
         Update: {
-          created_at?: string
-          email?: string
-          expires_at?: string
+          created_at?: string | null
+          email?: string | null
           id?: string
-          payment_status?: string
-          phone_number?: string
-          session_token?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      user_submissions: {
-        Row: {
-          aggregate_score: number
-          amount_paid: number | null
-          core_subjects: Json
-          created_at: string
-          elective_subjects: Json
-          eligible_courses: Json | null
-          email: string
-          exam_type: string
-          id: string
-          payment_reference: string | null
-          payment_status: string | null
-          phone_number: string
-          selected_university: string
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          aggregate_score: number
-          amount_paid?: number | null
-          core_subjects: Json
-          created_at?: string
-          elective_subjects: Json
-          eligible_courses?: Json | null
-          email: string
-          exam_type: string
-          id?: string
-          payment_reference?: string | null
-          payment_status?: string | null
-          phone_number: string
-          selected_university: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          aggregate_score?: number
-          amount_paid?: number | null
-          core_subjects?: Json
-          created_at?: string
-          elective_subjects?: Json
-          eligible_courses?: Json | null
-          email?: string
-          exam_type?: string
-          id?: string
-          payment_reference?: string | null
-          payment_status?: string | null
-          phone_number?: string
-          selected_university?: string
-          updated_at?: string
-          user_id?: string | null
+          is_admin?: boolean | null
+          password?: string
+          phone?: string | null
+          updated_at?: string | null
+          username?: string
         }
         Relationships: []
       }
       ussd_sessions: {
         Row: {
-          created_at: string
+          created_at: string | null
           msisdn: string
-          session_data: Json
+          session_data: Json | null
           session_id: string
           stage: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           msisdn: string
-          session_data?: Json
+          session_data?: Json | null
           session_id: string
           stage?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           msisdn?: string
-          session_data?: Json
+          session_data?: Json | null
           session_id?: string
           stage?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
-      voucher_transactions: {
+      voucher_types: {
         Row: {
-          amount: number
-          created_at: string
-          datamart_transaction_id: string | null
+          aggregator_charge: number | null
+          bulk_price: number | null
+          cost_price: number | null
+          created_at: string | null
           description: string | null
           id: string
-          phone_number: string
-          pin: string | null
-          product: string
+          low_stock_threshold: number | null
+          name: string
+          price: number
+          updated_at: string | null
+        }
+        Insert: {
+          aggregator_charge?: number | null
+          bulk_price?: number | null
+          cost_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          low_stock_threshold?: number | null
+          name: string
+          price: number
+          updated_at?: string | null
+        }
+        Update: {
+          aggregator_charge?: number | null
+          bulk_price?: number | null
+          cost_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          low_stock_threshold?: number | null
+          name?: string
+          price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      vouchers: {
+        Row: {
+          created_at: string | null
+          pin: string
+          serial: string
+          type: string | null
+          voucher_ID: number
+        }
+        Insert: {
+          created_at?: string | null
+          pin: string
+          serial: string
+          type?: string | null
+          voucher_ID?: number
+        }
+        Update: {
+          created_at?: string | null
+          pin?: string
+          serial?: string
+          type?: string | null
+          voucher_ID?: number
+        }
+        Relationships: []
+      }
+      web_pay: {
+        Row: {
+          amount: number
+          created_at: string | null
+          email: string
+          id: string
+          mobile_number: string
+          name: string
+          network: string
+          product_type: string
           quantity: number
-          reference: string
-          serial: string | null
-          sms_status: string | null
+          reference: string | null
           status: string
-          updated_at: string
         }
         Insert: {
           amount: number
-          created_at?: string
-          datamart_transaction_id?: string | null
-          description?: string | null
+          created_at?: string | null
+          email: string
           id?: string
-          phone_number: string
-          pin?: string | null
-          product: string
-          quantity?: number
-          reference: string
-          serial?: string | null
-          sms_status?: string | null
+          mobile_number: string
+          name: string
+          network: string
+          product_type: string
+          quantity: number
+          reference?: string | null
           status?: string
-          updated_at?: string
         }
         Update: {
           amount?: number
-          created_at?: string
-          datamart_transaction_id?: string | null
-          description?: string | null
+          created_at?: string | null
+          email?: string
           id?: string
-          phone_number?: string
-          pin?: string | null
-          product?: string
+          mobile_number?: string
+          name?: string
+          network?: string
+          product_type?: string
           quantity?: number
-          reference?: string
-          serial?: string | null
-          sms_status?: string | null
+          reference?: string | null
           status?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      webhook_transactions: {
-        Row: {
-          amount: number | null
-          created_at: string
-          full_name: string | null
-          id: string
-          phone_number: string | null
-          product: string | null
-          quantity: number | null
-          raw_payload: Json | null
-          reference: string | null
-          source_hook: string | null
-          status: string | null
-          updated_at: string
-        }
-        Insert: {
-          amount?: number | null
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          phone_number?: string | null
-          product?: string | null
-          quantity?: number | null
-          raw_payload?: Json | null
-          reference?: string | null
-          source_hook?: string | null
-          status?: string | null
-          updated_at?: string
-        }
-        Update: {
-          amount?: number | null
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          phone_number?: string | null
-          product?: string | null
-          quantity?: number | null
-          raw_payload?: Json | null
-          reference?: string | null
-          source_hook?: string | null
-          status?: string | null
-          updated_at?: string
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      customer_transaction_counts: {
+        Row: {
+          email: string | null
+          id: string | null
+          name: string | null
+          phone_number: string | null
+          total_spent: number | null
+          transaction_count: number | null
+        }
+        Relationships: []
+      }
+      daily_sales_data: {
+        Row: {
+          day: string | null
+          total_revenue: number | null
+          transaction_count: number | null
+        }
+        Relationships: []
+      }
+      sold_vouchers_with_transactions: {
+        Row: {
+          amount: number | null
+          id: string | null
+          phone_number: string | null
+          pin: string | null
+          quantity: number | null
+          reference: string | null
+          serial: string | null
+          sold_at: string | null
+          status: string | null
+          type: string | null
+        }
+        Relationships: []
+      }
+      voucher_types_with_stock: {
+        Row: {
+          bulk_price: number | null
+          description: string | null
+          id: string | null
+          name: string | null
+          price: number | null
+          stock: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      sync_customers_from_transactions: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

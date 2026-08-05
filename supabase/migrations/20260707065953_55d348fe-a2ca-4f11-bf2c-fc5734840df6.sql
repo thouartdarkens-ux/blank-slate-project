@@ -1,2 +1,0 @@
-ALTER TABLE public.affiliates ADD COLUMN IF NOT EXISTS momo_number TEXT, ADD COLUMN IF NOT EXISTS momo_name TEXT;
-ALTER TABLE public.affiliate_withdrawals ADD COLUMN IF NOT EXISTS momo_number TEXT, ADD COLUMN IF NOT EXISTS momo_name TEXT;

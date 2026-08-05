@@ -1,1 +1,69 @@
-project_id = "ngqlvcbkbxoqpdvmofto"
+
+project_id = "iyagntncuhajyktsqtmm"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 9999
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+enable_email_confirmations = false
+enable_sms_confirmations = false
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[functions.buy-voucher-api]
+verify_jwt = false
+
+[functions.buy-checker]
+verify_jwt = false
+
+[functions.get-voucher-history]
+verify_jwt = false
+
+[functions.get-voucher-types]
+verify_jwt = false
+
+[functions.send-sms]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.send-custom-email]
+verify_jwt = false
+
+[functions.send-scheduled-sms]
+verify_jwt = false
+
+[functions.send-low-stock-sms]
+verify_jwt = false
+
+[functions.check-sms-balance]
+verify_jwt = false
+
+[functions.check-sms-balance-alert]
+verify_jwt = false
+
+[functions.sync-customers]
+verify_jwt = false
+
+[functions.get-api-key]
+verify_jwt = false
+
+[functions.store-phone-email]
+verify_jwt = false
+
+[functions.get-email-by-phone]
+verify_jwt = false

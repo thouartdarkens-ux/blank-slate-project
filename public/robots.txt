@@ -12,5 +12,3 @@ Allow: /
 
 User-agent: *
 Allow: /
-
-sitemap: https://buycheckerpins.com/sitemap.xml
