@@ -65,7 +65,7 @@ export function StatCards({ salesData, totalInventory, metrics, rangeRevenue }: 
         className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-800/30"
       />
       <StatCard 
-        title="Sales" 
+        title="Sales — selected range" 
         value={metrics ? metrics.totalSales.toString() : "0"} 
         icon={TrendingUp} 
         trend={{
@@ -87,7 +87,7 @@ export function StatCards({ salesData, totalInventory, metrics, rangeRevenue }: 
         className="bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/20 dark:to-orange-800/30"
       />
       <StatCard 
-        title="Unique Customers" 
+        title="Customers — selected range" 
         value={metrics ? metrics.totalCustomers.toString() : "0"} 
         icon={Users} 
         trend={{
