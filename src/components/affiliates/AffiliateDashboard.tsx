@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { RefreshCw, Trophy, Users, DollarSign, Percent } from "lucide-react";
 import { useAffiliateAnalytics, LeaderboardEntry } from "@/hooks/useAffiliateAnalytics";
+import { DateRangeFilter, DateRange, defaultDateRange } from "@/components/DateRangeFilter";
 
 const cedis = (n: number) =>
   `₵${Number(n || 0).toLocaleString("en-US", {
@@ -87,7 +88,8 @@ function AffiliateBadgeCard({ entry }: { entry: LeaderboardEntry }) {
 }
 
 export function AffiliateDashboard() {
-  const { leaderboard, totals, isLoading, refetch } = useAffiliateAnalytics();
+  const [range, setRange] = useState<DateRange>(defaultDateRange);
+  const { leaderboard, totals, isLoading, refetch } = useAffiliateAnalytics(range);
   const [selected, setSelected] = useState<string | null>(null);
 
   const selectedEntry = leaderboard.find((e) => e.sourceHook === selected);
@@ -121,7 +123,8 @@ export function AffiliateDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <DateRangeFilter value={range} onChange={setRange} />
         <Button variant="outline" onClick={refetch} disabled={isLoading} className="gap-2">
           <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           Refresh

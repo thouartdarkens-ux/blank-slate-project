@@ -50,16 +50,42 @@ export interface LeaderboardEntry {
 
 const PAGE_SIZE = 1000;
 
-async function fetchAllTransactions(): Promise<WebhookTransaction[]> {
+export interface AnalyticsDateRange {
+  from: string; // yyyy-mm-dd
+  to: string; // yyyy-mm-dd
+}
+
+export const defaultAnalyticsRange = (): AnalyticsDateRange => {
+  const to = new Date();
+  const from = new Date();
+  from.setFullYear(from.getFullYear() - 1);
+  return {
+    from: from.toISOString().slice(0, 10),
+    to: to.toISOString().slice(0, 10),
+  };
+};
+
+async function fetchAllTransactions(
+  range: AnalyticsDateRange
+): Promise<WebhookTransaction[]> {
   const all: WebhookTransaction[] = [];
   let page = 1;
   let total = Infinity;
 
+  // `to` is inclusive of the whole selected day
+  const fromISO = new Date(`${range.from}T00:00:00.000Z`).toISOString();
+  const toISO = new Date(`${range.to}T23:59:59.999Z`).toISOString();
+
   while (all.length < total && page <= 10) {
-    const res = await fetch(
-      `${TRANSACTIONS_ENDPOINT}?page=${page}&limit=${PAGE_SIZE}`,
-      { method: "GET" }
-    );
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(PAGE_SIZE),
+      from: fromISO,
+      to: toISO,
+    });
+    const res = await fetch(`${TRANSACTIONS_ENDPOINT}?${params.toString()}`, {
+      method: "GET",
+    });
     if (!res.ok) throw new Error(`Failed to load transactions (${res.status})`);
     const data = await res.json();
     const list: WebhookTransaction[] = data?.transactions ?? [];
@@ -69,7 +95,13 @@ async function fetchAllTransactions(): Promise<WebhookTransaction[]> {
     page += 1;
   }
 
-  return all;
+  // Safety net in case the endpoint ignores the date filters
+  const fromTs = new Date(fromISO).getTime();
+  const toTs = new Date(toISO).getTime();
+  return all.filter((t) => {
+    const ts = new Date(t.created_at).getTime();
+    return Number.isNaN(ts) ? true : ts >= fromTs && ts <= toTs;
+  });
 }
 
 async function fetchAffiliates(): Promise<Affiliate[]> {
@@ -87,10 +119,16 @@ export const isSuccessful = (t: WebhookTransaction) =>
     String(t.status ?? "").toLowerCase()
   );
 
-export function useAffiliateAnalytics() {
+export function useAffiliateAnalytics(range?: AnalyticsDateRange) {
+  const effectiveRange = range ?? defaultAnalyticsRange();
+
   const transactionsQuery = useQuery({
-    queryKey: ["webhook-transactions"],
-    queryFn: fetchAllTransactions,
+    queryKey: [
+      "webhook-transactions",
+      effectiveRange.from,
+      effectiveRange.to,
+    ],
+    queryFn: () => fetchAllTransactions(effectiveRange),
     staleTime: 60_000,
   });
 
