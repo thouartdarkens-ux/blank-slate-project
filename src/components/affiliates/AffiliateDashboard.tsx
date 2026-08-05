@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { RefreshCw, Trophy, Users, DollarSign, Percent } from "lucide-react";
 import { useAffiliateAnalytics, LeaderboardEntry } from "@/hooks/useAffiliateAnalytics";
+import { DateRangeFilter, DateRange, defaultDateRange } from "@/components/DateRangeFilter";
 
 const cedis = (n: number) =>
   `₵${Number(n || 0).toLocaleString("en-US", {
