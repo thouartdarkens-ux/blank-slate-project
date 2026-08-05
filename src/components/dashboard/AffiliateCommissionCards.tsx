@@ -12,14 +12,21 @@ const cedis = (n: number) =>
     maximumFractionDigits: 2,
   })}`;
 
-export function AffiliateCommissionCards() {
-  const [range, setRange] = useState<DateRange>(defaultDateRange);
+interface Props {
+  range?: DateRange;
+  onRangeChange?: (r: DateRange) => void;
+}
+
+export function AffiliateCommissionCards({ range: rangeProp, onRangeChange }: Props) {
+  const [internalRange, setInternalRange] = useState<DateRange>(defaultDateRange);
+  const range = rangeProp ?? internalRange;
+  const setRange = onRangeChange ?? setInternalRange;
   const { totals, leaderboard, isLoading } = useAffiliateAnalytics(range);
   const top = leaderboard.slice(0, 3);
 
   return (
     <div className="space-y-4">
-      <DateRangeFilter value={range} onChange={setRange} />
+      {!rangeProp && <DateRangeFilter value={range} onChange={setRange} />}
       <div className="grid gap-4 md:grid-cols-3">
       <Card className="bg-gradient-to-br from-teal-50 to-cyan-100 dark:from-teal-900/20 dark:to-cyan-800/30">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
