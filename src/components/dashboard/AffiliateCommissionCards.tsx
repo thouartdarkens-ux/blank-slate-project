@@ -75,6 +75,7 @@ export function AffiliateCommissionCards() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
